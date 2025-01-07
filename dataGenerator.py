@@ -14,7 +14,7 @@ NUM_LOCATIONS          = 23
 NUM_LANGUAGES          = 5
 NUM_DEGREES            = 5
 
-NUM_USERS              = 100   # total
+NUM_USERS              = 1000   # total
 NUM_USERCONTACT        = 75
 NUM_USERADDRESS        = 75
 NUM_EMPLOYEES          = 15   # subset of users
@@ -32,12 +32,12 @@ MIN_SUBJECTS_PER_STUDY  = 5
 MAX_SUBJECTS_PER_STUDY  = 10
 NUM_INTERNSHIPS          = 4
 NUM_INTERNSHIP_DETAILS   = 8
-MIN_CLASSMEETINGS_PER_SUBJECT = 2
-MAX_CLASSMEETINGS_PER_SUBJECT = 3
+MIN_CLASSMEETINGS_PER_SUBJECT = 5
+MAX_CLASSMEETINGS_PER_SUBJECT = 20
 NUM_ATONEMENTS            = 0
 NUM_SUBJECT_DETAILS_PER_SUBJECT = 12
-MIN_CONVENTIONS_PER_SEMESTER    = 4
-MAX_CONVENTIONS_PER_SEMESTER    = 10
+MIN_CONVENTIONS_PER_SEMESTER    = 10
+MAX_CONVENTIONS_PER_SEMESTER    = 20
 
 # =============== PAYMENTS
 # NUM_SERVICES           = 12 
@@ -650,8 +650,8 @@ for subj in subject_records:
 # ==============================================================================
 # COURSES
 # ==============================================================================
-NUM_COURSES = 5
-NUM_MODULES = 30
+NUM_COURSES = 25
+NUM_MODULES = 100
 possible_coordinator_emps = [e for e in employee_records
                              if next(u for u in user_records if u['UserID']==e['EmployeeID'])['UserTypeID'] in [2,4]]
 courses_records = []
@@ -697,7 +697,7 @@ for i in range(1, NUM_MODULES + 1):
 # ==============================================================================
 # Meetings
 # ==============================================================================
-NUM_MEETINGS = 50
+NUM_MEETINGS = 200
 meeting_types = ["stationary", "offline video", "online live"]
 stationary_meetings_records = []
 offline_video_records = []
