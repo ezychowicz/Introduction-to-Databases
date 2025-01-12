@@ -17,7 +17,7 @@ NUM_DEGREES            = 5
 NUM_USERS              = 1000   # total
 NUM_USERCONTACT        = 75
 NUM_USERADDRESS        = 75
-NUM_EMPLOYEES          = 15   # subset of users
+NUM_EMPLOYEES          = 20   # subset of users
 NUM_STUDENTS           = 80   # subset of users
 NUM_TRANSLATORS        = 5    # subset of employees
 MIN_EMPLOYEE_SUPERIORS = 0
@@ -95,9 +95,7 @@ for (tid, tname) in fixed_user_types[:NUM_USERTYPES]:
         'UserTypeName': tname
     })
 
-# 1b) USERTYPEPERMISSIONSHIERARCHY (optional)
 user_type_permissions = []
-# example: translator(3) supervised by lecturer(2)
 user_type_permissions.append({
     'UserTypeID': 3,
     'DirectTypeSupervisor': 2
@@ -284,7 +282,6 @@ for tr in translator_records:
 # ==============================================================================
 employee_degree_records = []
 for e in employee_records:
-    # random choice element from array
     how_many_degs = random.choice([0, 1, 1, 1, 1])
     if how_many_degs > 0:
         deg = random.choice(degree_records)
@@ -319,8 +316,8 @@ possible_coordinator_emps = [e for e in employee_records
 studies_records = []
 for i in range(1, NUM_STUDIES+1):
     coordinator = random.choice(possible_coordinator_emps) if possible_coordinator_emps else None
-    enrollment_deadline_dt = faker.date_between(start_date='-2y', end_date='+1y')
-    grad_dt = enrollment_deadline_dt + timedelta(days=365*3)
+    enrollment_deadline_dt = faker.date_between(start_date='-3y', end_date='+1y')
+    grad_dt = enrollment_deadline_dt + timedelta(days=365*random.randint(2,4))
     su = random.choice(service_user_details_records) if service_user_details_records else None
     studies_records.append({
         'StudiesID': i,
@@ -340,7 +337,7 @@ semester_records = []
 next_sem_id = 1
 for st in studies_records:
     study_id = st['StudiesID']
-    num_sem = random.randint(MIN_SEMESTERS_PER_STUDY, MAX_SEMESTERS_PER_STUDY)
+    num_sem = (st['ExpectedGraduationDate'] - st['EnrollmentDeadline']).days // 365
     base_dt = st['EnrollmentDeadline']
     if not isinstance(base_dt, datetime):
         base_dt = datetime.strptime(str(base_dt), '%Y-%m-%d')
@@ -355,6 +352,7 @@ for st in studies_records:
             'EndDate': sem_end_dt
         })
         next_sem_id += 1
+        base_dt = sem_end_dt + timedelta(days=20)
 
 # ==============================================================================
 # 16) SUBJECT
@@ -423,7 +421,9 @@ for st in studies_records:
         studies_details_records.append({
             'StudiesID': study_id,
             'StudentID': cs['StudentID'],
-            'StudiesGrade': assigned_grade
+            'StudiesGrade': assigned_grade,
+            # FIXME: assign all semesters for a student
+            'SemesterID': random.choice([s['SemesterID'] for s in semester_records if s['StudiesID']==study_id])
         })
         if study_id not in study_students_map:
             study_students_map[study_id] = []
@@ -473,10 +473,8 @@ for sem in semester_records:
         chosen_sub = random.choice(possible_subs)
         su = random.choice(service_user_details_records) if service_user_details_records else None
 
-        # pick a start date within the semester range
         cstart = faker.date_between(start_date=sem['StartDate'], end_date=sem['EndDate'])
-        duration_days = random.randint(2, 7)  # integer
-
+        duration_days = random.randint(2, 7)
         convention_records.append({
             'ConventionID': cid,
             'SemesterID': sem_id,
@@ -513,8 +511,6 @@ possible_teachers = [
 translator_ids = [t['TranslatorID'] for t in translator_records]
 next_meeting_id = 1
 
-# For each (Studies, Subject), we create X random meetings, 
-# each forced to occur within one of that Subject's Conventions.
 for s2s in subject_to_studies_records:
     s_id    = s2s['StudiesID']
     subj_id = s2s['SubjectID']
@@ -523,9 +519,7 @@ for s2s in subject_to_studies_records:
     how_many_meet = random.randint(MIN_CLASSMEETINGS_PER_SUBJECT, MAX_CLASSMEETINGS_PER_SUBJECT)
 
     # if the subject has NO conventions, we skip generation 
-    # (or you could forcibly create a fallback convention)
     if subj_id not in subject_convention_map or not subject_convention_map[subj_id]:
-        # skip
         continue
 
     for _ in range(how_many_meet):
@@ -588,14 +582,6 @@ for s2s in subject_to_studies_records:
             })
             # sync
             studs_here = study_students_map.get(s_id, [])
-            # for _sd in range(random.randint(1,5)):
-            #     if studs_here:
-            #         chosen_stud = random.choice(studs_here)
-            #         sync_class_details_records.append({
-            #             'MeetingID': cm_id,
-            #             'StudentID': chosen_stud,
-            #             'Attendance': random.choice([0,1])
-            #         })
             student_sample = random.sample(studs_here, k=min(5, len(studs_here)))
             for s in student_sample:
                 sync_class_details_records.append({
@@ -611,24 +597,14 @@ for s2s in subject_to_studies_records:
                 'StartDate': meet_date.strftime('%Y-%m-%d'),
                 'Deadline': (meet_date + timedelta(days=7)).strftime('%Y-%m-%d')
             })
-            # async
-            # studs_here = study_students_map.get(s_id, [])
-            # for _sd in range(random.randint(1,5)):
-            #     if studs_here:
-            #         chosen_stud = random.choice(studs_here)
-            #         async_class_details_records.append({
-            #             'MeetingID': cm_id,
-            #             'StudentID': chosen_stud,
-            #             'ViewDate': (meet_date + timedelta(days=random.randint(1,5))).strftime('%Y-%m-%d')
-            #         })
-            # TODO: always present
             studs_here = study_students_map.get(s_id, [])
             student_sample = random.sample(studs_here, k=min(5, len(studs_here)))
             for s in student_sample:
+                seen = random.choice([0,1,1,1])
                 async_class_details_records.append({
                     'MeetingID': cm_id,
                     'StudentID': s,
-                    'ViewDate': (meet_date + timedelta(days=random.randint(1,5))).strftime('%Y-%m-%d')
+                    'ViewDate': (meet_date + timedelta(days=random.randint(1,5))).strftime('%Y-%m-%d') if seen else 'NULL'
                 })
 
 # ==============================================================================
@@ -825,17 +801,14 @@ for i in range(1, NUM_WEBINARS + 1):
     wname   = faker.word().title() + " Webinar"
     wdate   = faker.date_time_between(start_date='-1y', end_date='now')
     link    = faker.uri()
-    # random duration in [30..120] minutes
     dur_minutes = random.randint(30, 120)
     hh = dur_minutes // 60
     mm = dur_minutes % 60
-    # T-SQL time(0) => "HH:MM:SS"
     duration_str = f"{hh:02d}:{mm:02d}:00"
     
     link_video = faker.uri()
     descr   = faker.sentence(nb_words=8)
     langid  = random.choice([l['LanguageID'] for l in language_records])
-    # AvailableDue => random date in next 20 days
     avdue   = faker.date_between(start_date='today', end_date='+20d')
     webinars_data.append({
         'WebinarID': i,
@@ -939,7 +912,6 @@ for i in range(1, NUM_SERVICES + 1):
         'ServiceType': stype
     })
 
-# Orders (UserID references a user who is likely a student)
 order_records = []
 next_order_id = 1
 student_user_ids = [u['UserID'] for u in user_records if u['UserTypeID'] == 1]
@@ -1151,8 +1123,8 @@ for it in internship_records:
 
 print("\n-- INSERT INTO StudiesDetails")
 for sdrec in studies_details_records:
-    print(f"INSERT INTO StudiesDetails (StudiesID, StudentID, StudiesGrade) "
-          f"VALUES ({sdrec['StudiesID']}, {sdrec['StudentID']}, {sdrec['StudiesGrade']});")
+    print(f"INSERT INTO StudiesDetails (StudiesID, StudentID, StudiesGrade, SemesterID) "
+          f"VALUES ({sdrec['StudiesID']}, {sdrec['StudentID']}, {sdrec['StudiesGrade']}, {sdrec['SemesterID']});")
 
 print("\n-- INSERT INTO InternshipDetails")
 for itd in internship_details_records:
