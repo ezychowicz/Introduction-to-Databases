@@ -421,7 +421,9 @@ for st in studies_records:
         studies_details_records.append({
             'StudiesID': study_id,
             'StudentID': cs['StudentID'],
-            'StudiesGrade': assigned_grade
+            'StudiesGrade': assigned_grade,
+            # FIXME: assign all semesters for a student
+            'SemesterID': random.choice([s['SemesterID'] for s in semester_records if s['StudiesID']==study_id])
         })
         if study_id not in study_students_map:
             study_students_map[study_id] = []
@@ -1121,8 +1123,8 @@ for it in internship_records:
 
 print("\n-- INSERT INTO StudiesDetails")
 for sdrec in studies_details_records:
-    print(f"INSERT INTO StudiesDetails (StudiesID, StudentID, StudiesGrade) "
-          f"VALUES ({sdrec['StudiesID']}, {sdrec['StudentID']}, {sdrec['StudiesGrade']});")
+    print(f"INSERT INTO StudiesDetails (StudiesID, StudentID, StudiesGrade, SemesterID) "
+          f"VALUES ({sdrec['StudiesID']}, {sdrec['StudentID']}, {sdrec['StudiesGrade']}, {sdrec['SemesterID']});")
 
 print("\n-- INSERT INTO InternshipDetails")
 for itd in internship_details_records:
