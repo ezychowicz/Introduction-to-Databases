@@ -1,6 +1,6 @@
 import random
 from faker import Faker
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 
 faker = Faker()
 Faker.seed(2137)
@@ -14,28 +14,28 @@ NUM_LOCATIONS          = 23
 NUM_LANGUAGES          = 5
 NUM_DEGREES            = 5
 
-NUM_USERS              = 100   # total
+NUM_USERS              = 500   # total
 NUM_USERCONTACT        = 75
 NUM_USERADDRESS        = 75
-NUM_EMPLOYEES          = 20   # subset of users
-NUM_STUDENTS           = 80   # subset of users
+NUM_EMPLOYEES          = 50   # subset of users
+NUM_STUDENTS           = 450   # subset of users
 NUM_TRANSLATORS        = 5    # subset of employees
 MIN_EMPLOYEE_SUPERIORS = 0
 
 # =============== COLLEGE/ACADEMIC
 NUM_GRADES             = 6
-NUM_STUDIES            = 3
-NUM_SUBJECTS           = 20
+NUM_STUDIES            = 5
+NUM_SUBJECTS           = 40
 MIN_SEMESTERS_PER_STUDY = 4
 MAX_SEMESTERS_PER_STUDY = 7
 MIN_SUBJECTS_PER_STUDY  = 5
 MAX_SUBJECTS_PER_STUDY  = 10
 NUM_INTERNSHIPS          = 4
 NUM_INTERNSHIP_DETAILS   = 8
-MIN_CLASSMEETINGS_PER_SUBJECT = 2
-MAX_CLASSMEETINGS_PER_SUBJECT = 3
+MIN_CLASSMEETINGS_PER_SUBJECT = 5
+MAX_CLASSMEETINGS_PER_SUBJECT = 20
 NUM_ATONEMENTS            = 0
-NUM_SUBJECT_DETAILS_PER_SUBJECT = 12
+NUM_SUBJECT_DETAILS_PER_SUBJECT = 30
 MIN_CONVENTIONS_PER_SEMESTER    = 4
 MAX_CONVENTIONS_PER_SEMESTER    = 10
 
@@ -218,8 +218,8 @@ for uid in random_ids_for_contact:
 # 8) USERADDRESSDETAILS
 # ==============================================================================
 user_address_records = []
-random_ids_for_address = random.sample(all_user_ids, k=min(NUM_USERADDRESS, len(all_user_ids)))
-for uid in random_ids_for_address:
+a_users_ids = [u['UserID'] for u in user_records]
+for uid in a_users_ids:
     loc = random.choice(location_records)
     user_address_records.append({
         'UserID': uid,
@@ -531,9 +531,10 @@ for s2s in subject_to_studies_records:
         conv_start   = chosen_conv['StartDate']
         conv_dur     = chosen_conv['DurationDays']
 
-        # pick a day within [conv_start, conv_start+dur-1]
         offset_days = random.randint(0, max(0, conv_dur - 1))
-        meet_date   = conv_start + timedelta(days=offset_days)
+        meet_date = conv_start + timedelta(days=offset_days)
+        meeting_hour = time(hour=faker.random_int(min=8, max=18), minute=0)
+        meet_dt = datetime.combine(meet_date, meeting_hour)
 
         teacher_emp = random.choice(possible_teachers) if possible_teachers else None
         chosen_translator = random.choice(translator_ids) if translator_ids else None
@@ -549,7 +550,7 @@ for s2s in subject_to_studies_records:
             'ServiceID': random.choice(service_user_details_records)['ServiceUserID']
                          if service_user_details_records else 1,
             'MeetingType': mtype,
-            'MeetingDate': meet_date  # store so we can put it in the sub-table
+            'MeetingDate': meet_date
         })
 
         # decide sub-type
@@ -560,7 +561,7 @@ for s2s in subject_to_studies_records:
                 'MeetingID': cm_id,
                 'RoomID': random.randint(100,200),
                 'GroupSize': random.randint(5,30),
-                'StartDate': meet_date.strftime('%Y-%m-%d %H:%M:%S'),
+                'StartDate': meet_dt.strftime('%Y-%m-%d %H:%M:%S'),
                 'Duration': random.choice(['01:30:00', '01:30:00', '01:30:00','01:30:00','01:30:00', '02:00:00', '00:45:00', '00:45:00'])
             })
             # sync
@@ -577,7 +578,7 @@ for s2s in subject_to_studies_records:
             online_live_class_records.append({
                 'MeetingID': cm_id,
                 'Link': faker.uri(),
-                'StartDate': meet_date.strftime('%Y-%m-%d %H:%M:%S'),
+                'StartDate': meet_dt.strftime('%Y-%m-%d %H:%M:%S'),
                 'Duration': random.choice(['01:30:00', '01:30:00', '01:30:00','01:30:00','01:30:00', '02:00:00', '00:45:00', '00:45:00'])
             })
             # sync
@@ -612,12 +613,14 @@ for s2s in subject_to_studies_records:
 # ==============================================================================
 subject_details_records = []
 for subj in subject_records:
-    how_many = random.randint(1, NUM_SUBJECT_DETAILS_PER_SUBJECT)
-    chosen_students = random.sample(student_coll_records, k=min(how_many, len(student_coll_records)))
-    for cst in chosen_students:
+    # how_many = random.randint(1, NUM_SUBJECT_DETAILS_PER_SUBJECT)
+    # chosen_students = random.sample(student_coll_records, k=min(how_many, len(student_coll_records)))
+    studies_with_subject = [s2s['StudiesID'] for s2s in subject_to_studies_records if s2s['SubjectID'] == subj['SubjectID']]
+    students_from_studies = [s['StudentID'] for s in studies_details_records if s['StudiesID'] in studies_with_subject]
+    for cst in students_from_studies:
         subject_details_records.append({
             'SubjectID': subj['SubjectID'],
-            'StudentID': cst['StudentID'],
+            'StudentID': cst,
             'SubjectGrade': round(random.uniform(2.0,5.0),1),
             'Attendance': round(random.uniform(0,100),2)
         })
@@ -1176,7 +1179,11 @@ for sdc in sync_class_details_records:
 
 print("\n-- INSERT INTO AsyncClassDetails")
 for adc in async_class_details_records:
-    print(f"INSERT INTO AsyncClassDetails (MeetingID, StudentID, ViewDate) "
+    if adc['ViewDate'] == 'NULL':
+        print(f"INSERT INTO AsyncClassDetails (MeetingID, StudentID, ViewDate) "
+              f"VALUES ({adc['MeetingID']}, {adc['StudentID']}, {adc['ViewDate']});")
+    else:
+        print(f"INSERT INTO AsyncClassDetails (MeetingID, StudentID, ViewDate) "
           f"VALUES ({adc['MeetingID']}, {adc['StudentID']}, '{adc['ViewDate']}');")
 
 print("\n-- INSERT INTO SubjectDetails")
