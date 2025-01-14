@@ -749,7 +749,7 @@
 --             (ServiceID, ServiceType)
 --         VALUES
 --             (@ServiceID, 'ClassMeetingService');
-        
+
 --         INSERT INTO ClassMeetingService
 --             (ServiceID, PriceStudents, PriceOthers)
 --         VALUES
@@ -1079,12 +1079,12 @@
 --                 @StartDate,
 --                 @Deadline
 --             );
-        
+
 --         INSERT INTO Services
 --             (ServiceID, ServiceType)
 --         VALUES
 --             (@ServiceID, 'ClassMeetingService');
-        
+
 --         INSERT INTO ClassMeetingService
 --             (ServiceID, PriceStudents, PriceOthers)
 --         VALUES
@@ -2826,3 +2826,185 @@
 --     END CATCH;
 -- END;
 
+
+-- Create or alter FUNCTION p_CalculateSubjectAttendance
+-- (
+--     @SubjectID INT,
+--     @StudentID INT
+-- )
+-- returns FLOAT
+-- AS
+-- BEGIN
+--     DECLARE @TotalClasses INT;
+--     DECLARE @AttendedClasses INT;
+--     DECLARE @Attendance FLOAT;
+
+--     SET @TotalClasses = (SELECT COUNT(*)
+--     FROM SyncClassDetails
+--     WHERE MeetingID IN (SELECT ClassMeetingID
+--         FROM ClassMeeting
+--         WHERE SubjectID = @SubjectID) AND StudentID = @StudentID);
+--     SET @AttendedClasses = (SELECT COUNT(*)
+--     FROM SyncClassDetails
+--     WHERE Attendance = 1 and MeetingID IN (SELECT ClassMeetingID
+--         FROM ClassMeeting
+--         WHERE SubjectID = @SubjectID) AND StudentID = @StudentID);
+
+--     IF @TotalClasses = 0
+--     BEGIN
+--         SET @Attendance = 0;
+--     END
+--     ELSE
+--     BEGIN
+--         SET @Attendance = (@AttendedClasses * 100.0) / @TotalClasses;
+--     END
+
+--     RETURN @Attendance;
+-- END;
+
+-- Create or alter FUNCTION p_CalculateStudiesAttendance
+-- (
+--     @StudiesID INT,
+--     @StudentID INT
+-- )
+-- returns FLOAT
+-- AS
+-- BEGIN
+--     DECLARE @TotalClasses INT;
+--     DECLARE @AttendedClasses INT;
+--     DECLARE @Attendance FLOAT;
+
+--     IF NOT EXISTS (SELECT 1 FROM Studies WHERE StudiesID = @StudiesID)
+--     BEGIN
+--         RETURN 0.0;
+--     END;
+
+--     IF NOT EXISTS (SELECT 1 FROM Users WHERE UserID = @StudentID and UserTypeID = 1)
+--     BEGIN
+--         RETURN 0.0;
+--     END;
+
+--     IF NOT EXISTS (SELECT 1 FROM StudiesDetails WHERE StudiesID = @StudiesID and StudentID = @StudentID)
+--     BEGIN
+--         RETURN 0.0;
+--     END;
+
+--     SET @TotalClasses = (SELECT COUNT(*)
+--     FROM SyncClassDetails
+--     WHERE MeetingID IN (SELECT ClassMeetingID
+--         FROM ClassMeeting
+--         WHERE SubjectID IN (SELECT SubjectID
+--             FROM SubjectStudiesAssignment
+--             WHERE StudiesID = @StudiesID)) AND StudentID = @StudentID);
+--     SET @AttendedClasses = (SELECT COUNT(*)
+--     FROM SyncClassDetails
+--     WHERE Attendance = 1 and MeetingID IN (SELECT ClassMeetingID
+--         FROM ClassMeeting
+--         WHERE SubjectID IN (SELECT SubjectID
+--             FROM SubjectStudiesAssignment
+--             WHERE StudiesID = @StudiesID)) AND StudentID = @StudentID);
+
+--     IF @TotalClasses = 0
+--     BEGIN
+--         SET @Attendance = 0;
+--     END
+--     ELSE
+--     BEGIN
+--         SET @Attendance = (@AttendedClasses * 100.0) / @TotalClasses;
+--     END
+
+--     RETURN @Attendance;
+-- END;
+
+-- use u_szymocha
+-- SELECT dbo.p_CalculateStudiesAttendance(1, 4) AS AttendancePercentage;
+
+-- Create or alter function p_CalculateInternshipCompletion
+-- (
+--     @InternshipID INT,
+--     @StudiesID INT
+-- )
+-- returns FLOAT
+-- AS
+-- BEGIN
+--     DECLARE @TotalStudents INT;
+--     DECLARE @CompletedStudents INT;
+--     DECLARE @Completion FLOAT;
+
+--     SET @TotalStudents = (SELECT COUNT(*)
+--     FROM InternshipDetails
+--     WHERE InternshipID = @InternshipID);
+--     SET @CompletedStudents = (SELECT COUNT(*)
+--     FROM InternshipDetails
+--     WHERE InternshipAttendance = 1 and InternshipID = @InternshipID);
+
+--     IF @TotalStudents = 0
+--     BEGIN
+--         SET @Completion = 0;
+--     END
+--     ELSE
+--     BEGIN
+--         SET @Completion = (@CompletedStudents * 100.0) / @TotalStudents;
+--     END
+
+--     RETURN @Completion;
+-- END;
+
+-- Create or alter function p_CalculateAverageNumberOfPeopleInClass
+-- (
+--     @StudiesID INT
+-- )
+-- returns FLOAT
+-- AS
+-- BEGIN
+--     DECLARE @TotalClasses INT;
+--     DECLARE @TotalStudents INT;
+--     DECLARE @Average FLOAT;
+
+--     SET @TotalClasses = (SELECT COUNT(*)
+--     FROM ClassMeeting
+--     WHERE MeetingType in ('Stationary', 'OnlineLive') and SubjectID IN (SELECT SubjectID
+--             FROM SubjectStudiesAssignment
+--             WHERE StudiesID = @StudiesID));
+--     SET @TotalStudents = (SELECT COUNT(*)
+--     FROM SyncClassDetails
+--     WHERE Attendance = 1 and MeetingID IN (SELECT ClassMeetingID
+--         FROM ClassMeeting
+--         WHERE SubjectID IN (SELECT SubjectID
+--             FROM SubjectStudiesAssignment
+--             WHERE StudiesID = @StudiesID)));
+
+--     IF @TotalClasses = 0
+--     BEGIN
+--         SET @Average = 0;
+--     END
+--     ELSE
+--     BEGIN
+--         SET @Average = @TotalStudents / @TotalClasses;
+--     END
+
+--     RETURN @Average;
+-- END;
+
+-- CREATE or ALTER FUNCTION p_CalculateMINRoomCapacity
+-- (
+--     @StudiesID INT
+-- )
+-- RETURNS INT
+-- AS
+-- BEGIN
+--     DECLARE @MINCapacity INT;
+
+--     SET @MINCapacity = (SELECT MIN(Capacity)
+--     FROM Rooms
+--     where RoomID in (Select RoomID
+--     from StationaryClass
+--     WHERE MeetingID IN (SELECT ClassMeetingID
+--     FROM ClassMeeting
+--     where SubjectID IN (SELECT SubjectID
+--     from SubjectStudiesAssignment
+--     WHERE StudiesID = @StudiesID))));
+--     RETURN @MINCapacity;
+-- END;
+
+-- Select dbo.p_CalculateMINRoomCapacity(1) as MINRoomCapacity;

@@ -995,7 +995,7 @@ if order_details_records:
 #==============================================================================
 NUM_ROOMS = 100
 rooms_records = []
-for i in range(NUM_ROOMS+1):
+for i in range(100):
     rooms_records.append({
         'RoomID': i+100,
         'Capacity': random.randint(10, 100),
@@ -1368,7 +1368,7 @@ for rd in room_details_records:
           f"VALUES ({rd['RoomID']}, '{rd['ScheduleOnDate']}', {rd['SlotID']});")
 
 # RoomSchedule
-print("\n-- INSERT INTO RoomSchedule")
+print("\n-- INSERT INTO RoomScheduleOnDate")
 for rs in room_schedule_records:
-    print(f"INSERT INTO RoomSchedule (RoomID, StartDate, SlotID, EndDate, SlotAvailability) "
+    print(f"INSERT INTO RoomScheduleOnDate (RoomID, StartTime, SlotID, EndTime, SlotAvailability) "
           f"VALUES ({rs['RoomID']}, '{rs['StartDate']}', {rs['SlotID']}, '{rs['EndDate']}', {rs['SlotAvailability']});")
