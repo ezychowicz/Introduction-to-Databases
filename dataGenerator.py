@@ -80,6 +80,8 @@ def format_money(val) -> str:
     """Format a float as a numeric or money type. Adjust if your DB syntax differs."""
     return f"{val:.2f}"
 
+room_schedule_records = []
+room_details_records = []
 # ==============================================================================
 # 1) USERTYPE
 # ==============================================================================
@@ -564,10 +566,22 @@ for s2s in subject_to_studies_records:
                 'StartDate': meet_dt.strftime('%Y-%m-%d %H:%M:%S'),
                 'Duration': random.choice(['01:30:00', '01:30:00', '01:30:00','01:30:00','01:30:00', '02:00:00', '00:45:00', '00:45:00'])
             })
+            room_schedule_records.append({
+                'RoomID': cm_id,
+                'StartDate': meet_dt.strftime('%Y-%m-%d %H:%M:%S'),
+                'SlotID': 1 if not len(room_schedule_records) else max(r['SlotID'] for r in room_schedule_records)+1,
+                'EndDate': (meet_dt + timedelta(hours=1, minutes=30)).strftime('%Y-%m-%d %H:%M:%S'),
+                'SlotAvailability': 0
+            })
+            room_details_records.append({
+                'RoomID': cm_id,
+                'ScheduleOnDate': meet_date.strftime('%Y-%m-%d'),
+                'SlotID': 1 if not len(room_details_records) else max(r['SlotID'] for r in room_details_records)+1
+            })
             # sync
             studs_here = study_students_map.get(s_id, [])
             # ???
-            student_sample = random.sample(studs_here, k=random.randint(3, len(studs_here)))
+            student_sample = random.sample(studs_here, k=len(studs_here))
             for s in student_sample:
                 sync_class_details_records.append({
                     'MeetingID': cm_id,
@@ -706,6 +720,18 @@ for i in range(1, NUM_MEETINGS + 1):
             'RoomID': room_id,
             'GroupSize': group_size,
             'TeacherID': teacher_id
+        })
+        room_details_records.append({
+            'RoomID': room_id,
+            'ScheduleOnDate': meeting_date.strftime('%Y-%m-%d'),
+            'SlotID': 1 if not len(room_details_records) else max(r['SlotID'] for r in room_details_records) + 1
+        })
+        room_schedule_records.append({
+            'RoomID': room_id,
+            'StartDate': meeting_date.strftime('%Y-%m-%d %H:%M:%S'),
+            'SlotID': 1 if not len(room_schedule_records) else max(r['SlotID'] for r in room_schedule_records) + 1,
+            'EndDate': (meeting_date + timedelta(hours=1, minutes=30)).strftime('%Y-%m-%d %H:%M:%S'),
+            'SlotAvailability': 0
         })
     elif meeting_type == "offline video":
         video_link = faker.url()  # Generowanie linku do nagrania
@@ -964,8 +990,19 @@ if order_details_records:
             'OrderID': od['OrderID']
         })
         next_payment_id += 1
-
-
+#==============================================================================
+# 26) Rooms
+#==============================================================================
+NUM_ROOMS = 100
+rooms_records = []
+for i in range(NUM_ROOMS+1):
+    rooms_records.append({
+        'RoomID': i+100,
+        'Capacity': random.randint(10, 100),
+        'Address': faker.address(),
+        'Floor': random.randint(0, 10),
+        'AccessibleForDisabled': random.choice([0, 1, 1])
+    })
 
 # ==============================================================================
 # PRINTING ALL INSERT STATEMENTS
@@ -1317,3 +1354,21 @@ for wd in webinardetails_data:
     print(f"INSERT INTO WebinarDetails (UserID, WebinarID) "
           f"VALUES ({wd['ParticipantID']}, {wd['WebinarID']});")
 print("\n-- Done generating integrated mock data (Users, Employees, College, Payments).")
+
+# Rooms
+print("\n-- INSERT INTO Rooms")
+for r in rooms_records:
+    print(f"INSERT INTO Rooms (RoomID, Capacity, Address, Floor, AccessibleForDisabled) "
+          f"VALUES ({r['RoomID']}, {r['Capacity']}, '{quote_str(r['Address'])}', {r['Floor']}, {r['AccessibleForDisabled']});")
+
+# RoomDetails
+print("\n-- INSERT INTO RoomDetails")
+for rd in room_details_records:
+    print(f"INSERT INTO RoomDetails (RoomID, ScheduleOnDate, SlotID) "
+          f"VALUES ({rd['RoomID']}, '{rd['ScheduleOnDate']}', {rd['SlotID']});")
+
+# RoomSchedule
+print("\n-- INSERT INTO RoomSchedule")
+for rs in room_schedule_records:
+    print(f"INSERT INTO RoomSchedule (RoomID, StartDate, SlotID, EndDate, SlotAvailability) "
+          f"VALUES ({rs['RoomID']}, '{rs['StartDate']}', {rs['SlotID']}, '{rs['EndDate']}', {rs['SlotAvailability']});")
