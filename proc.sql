@@ -5144,3 +5144,997 @@
 --         THROW;
 --     END CATCH;
 -- END;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-- Jakub=============================================================================
+--CREATE OR ALTER PROCEDURE p_CreateWebinar
+--(
+--    @WebinarName VARCHAR(30),
+--    @TeacherID INT,
+--    @TranslatorID INT = NULL,
+--    @WebinarDate DATETIME,
+--    @Link VARCHAR(100),
+--    @DurationTime TIME(0) = NULL,
+--    @LinkToVideo VARCHAR(100),
+--    @WebinarDescription TEXT = NULL,
+--    @LanguageID INT = NULL,
+--    @AvailableDue DATE,
+--    @ServiceID INT
+--)
+--AS
+--BEGIN
+--    SET NOCOUNT ON;
+
+--    BEGIN TRY
+--        BEGIN TRANSACTION;
+
+--        IF @AvailableDue <= @WebinarDate
+--        BEGIN
+--            RAISERROR('AvailableDue must be later than WebinarDate.', 16, 1);
+--            ROLLBACK TRANSACTION;
+--            RETURN;
+--        END;
+
+--        INSERT INTO Webinars (
+--            WebinarName, TeacherID, TranslatorID, WebinarDate,
+--            Link, DurationTime, LinkToVideo, WebinarDescription,
+--            LanguageID, AvailableDue, ServiceID
+--        ) VALUES (
+--            @WebinarName, @TeacherID, @TranslatorID, @WebinarDate,
+--            @Link, @DurationTime, @LinkToVideo, @WebinarDescription,
+--            @LanguageID, @AvailableDue, @ServiceID
+--        );
+
+--        COMMIT TRANSACTION;
+--    END TRY
+--    BEGIN CATCH
+--        IF @@TRANCOUNT > 0
+--            ROLLBACK TRANSACTION;
+
+--        THROW;
+--    END CATCH;
+--END;
+
+--CREATE OR ALTER PROCEDURE p_EditWebinar
+--(
+--    @WebinarID INT,
+--    @WebinarName VARCHAR(30) = NULL,
+--    @WebinarDate DATETIME = NULL,
+--    @AvailableDue DATE = NULL
+--)
+--AS
+--BEGIN
+--    SET NOCOUNT ON;
+
+--    BEGIN TRY
+--        BEGIN TRANSACTION;
+
+--        IF NOT EXISTS (SELECT 1 FROM Webinars WHERE WebinarID = @WebinarID)
+--        BEGIN
+--            RAISERROR('Invalid WebinarID: no matching Webinar found.', 16, 1);
+--            ROLLBACK TRANSACTION;
+--            RETURN;
+--        END;
+
+--        IF @WebinarDate IS NOT NULL AND @AvailableDue IS NOT NULL AND @AvailableDue <= @WebinarDate
+--        BEGIN
+--            RAISERROR('AvailableDue must be later than WebinarDate.', 16, 2);
+--            ROLLBACK TRANSACTION;
+--            RETURN;
+--        END;
+
+--        UPDATE Webinars
+--        SET WebinarName = ISNULL(@WebinarName, WebinarName),
+--            WebinarDate = ISNULL(@WebinarDate, WebinarDate),
+--            AvailableDue = ISNULL(@AvailableDue, AvailableDue)
+--        WHERE WebinarID = @WebinarID;
+
+--        COMMIT TRANSACTION;
+--    END TRY
+--    BEGIN CATCH
+--        IF @@TRANCOUNT > 0
+--            ROLLBACK TRANSACTION;
+
+--        THROW;
+--    END CATCH;
+--END;
+
+--CREATE OR ALTER PROCEDURE p_AddUserToWebinar
+--(
+--    @UserID INT,
+--    @WebinarID INT
+--)
+--AS
+--BEGIN
+--    SET NOCOUNT ON;
+
+--    BEGIN TRY
+--        BEGIN TRANSACTION;
+
+--        IF NOT EXISTS (SELECT 1 FROM Webinars WHERE WebinarID = @WebinarID)
+--        BEGIN
+--            RAISERROR('Invalid WebinarID: no matching Webinar found.', 16, 1);
+--            ROLLBACK TRANSACTION;
+--            RETURN;
+--        END;
+
+--        IF EXISTS (SELECT 1 FROM WebinarDetails WHERE UserID = @UserID AND WebinarID = @WebinarID)
+--        BEGIN
+--            RAISERROR('User is already added to this Webinar.', 16, 2);
+--            ROLLBACK TRANSACTION;
+--            RETURN;
+--        END;
+
+--        INSERT INTO WebinarDetails (UserID, WebinarID)
+--        VALUES (@UserID, @WebinarID);
+
+--        COMMIT TRANSACTION;
+--    END TRY
+--    BEGIN CATCH
+--        IF @@TRANCOUNT > 0
+--            ROLLBACK TRANSACTION;
+
+--        THROW;
+--    END CATCH;
+--END;
+
+--CREATE OR ALTER PROCEDURE p_DeleteWebinar
+--(
+--    @WebinarID INT
+--)
+--AS
+--BEGIN
+--    SET NOCOUNT ON;
+
+--    BEGIN TRY
+--        BEGIN TRANSACTION;
+
+--        -- Sprawdzenie, czy webinar istnieje
+--        IF NOT EXISTS (SELECT 1 FROM Webinars WHERE WebinarID = @WebinarID)
+--        BEGIN
+--            RAISERROR('Invalid WebinarID: no matching webinar found.', 16, 1);
+--            ROLLBACK TRANSACTION;
+--            RETURN;
+--        END;
+
+--        -- Usuwanie powiązanych danych z tabeli WebinarDetails
+--        DELETE FROM WebinarDetails
+--        WHERE WebinarID = @WebinarID;
+
+--        -- Usuwanie webinaru z tabeli Webinars
+--        DELETE FROM Webinars
+--        WHERE WebinarID = @WebinarID;
+
+--        COMMIT TRANSACTION;
+--    END TRY
+
+--    BEGIN CATCH
+--        IF @@TRANCOUNT > 0
+--            ROLLBACK TRANSACTION;
+
+--        THROW;
+--    END CATCH;
+--END;
+
+--CREATE OR ALTER PROCEDURE p_AddUser
+--(
+--    @FirstName VARCHAR(30),
+--    @LastName VARCHAR(30),
+--    @DateOfBirth DATE = NULL,
+--    @UserTypeID INT
+--)
+--AS
+--BEGIN
+--    SET NOCOUNT ON;
+
+--    BEGIN TRY
+--        IF @DateOfBirth > GETDATE()
+--        BEGIN
+--            RAISERROR('DateOfBirth cannot be in the future.', 16, 1);
+--            RETURN;
+--        END;
+
+--        INSERT INTO Users (FirstName, LastName, DateOfBirth, UserTypeID)
+--        VALUES (@FirstName, @LastName, @DateOfBirth, @UserTypeID);
+--    END TRY
+--    BEGIN CATCH
+--        THROW;
+--    END CATCH;
+--END;
+
+--CREATE OR ALTER PROCEDURE p_UpdateUser
+--(
+--    @UserID INT,
+--    @FirstName VARCHAR(30) = NULL,
+--    @LastName VARCHAR(30) = NULL,
+--    @DateOfBirth DATE = NULL,
+--    @UserTypeID INT = NULL
+--)
+--AS
+--BEGIN
+--    SET NOCOUNT ON;
+
+--    BEGIN TRY
+--        IF @DateOfBirth IS NOT NULL AND @DateOfBirth > GETDATE()
+--        BEGIN
+--            RAISERROR('DateOfBirth cannot be in the future.', 16, 1);
+--            RETURN;
+--        END;
+
+--        UPDATE Users
+--        SET
+--            FirstName = COALESCE(@FirstName, FirstName),
+--            LastName = COALESCE(@LastName, LastName),
+--            DateOfBirth = COALESCE(@DateOfBirth, DateOfBirth),
+--            UserTypeID = COALESCE(@UserTypeID, UserTypeID)
+--        WHERE UserID = @UserID;
+
+--        IF @@ROWCOUNT = 0
+--        BEGIN
+--            RAISERROR('UserID not found.', 16, 1);
+--        END;
+--    END TRY
+--    BEGIN CATCH
+--        THROW;
+--    END CATCH;
+--END;
+
+--CREATE OR ALTER PROCEDURE p_DeleteUser
+--(
+--    @UserID INT
+--)
+--AS
+--BEGIN
+--    SET NOCOUNT ON;
+
+--    BEGIN TRY
+--        -- Usuwanie zależnych danych w powiązanych tabelach
+--        DELETE FROM UserAddressDetails WHERE UserID = @UserID;
+--        DELETE FROM UserContact WHERE UserID = @UserID;
+
+--        -- Usuwanie użytkownika
+--        DELETE FROM Users WHERE UserID = @UserID;
+
+--        IF @@ROWCOUNT = 0
+--        BEGIN
+--            RAISERROR('UserID not found.', 16, 1);
+--        END;
+--    END TRY
+--    BEGIN CATCH
+--        THROW;
+--    END CATCH;
+--END;
+
+--CREATE OR ALTER PROCEDURE p_AddEmployee
+--(
+--    @EmployeeID INT,
+--    @DateOfHire DATE = NULL
+--)
+--AS
+--BEGIN
+--    SET NOCOUNT ON;
+
+--    BEGIN TRY
+--        IF @DateOfHire IS NOT NULL AND @DateOfHire > GETDATE()
+--        BEGIN
+--            RAISERROR('DateOfHire cannot be in the future.', 16, 1);
+--            RETURN;
+--        END;
+
+--        INSERT INTO Employees (EmployeeID, DateOfHire)
+--        VALUES (@EmployeeID, @DateOfHire);
+--    END TRY
+--    BEGIN CATCH
+--        THROW;
+--    END CATCH;
+--END;
+
+--CREATE OR ALTER PROCEDURE p_UpdateEmployee
+--(
+--    @EmployeeID INT,
+--    @DateOfHire DATE = NULL
+--)
+--AS
+--BEGIN
+--    SET NOCOUNT ON;
+
+--    BEGIN TRY
+--        IF @DateOfHire IS NOT NULL AND @DateOfHire > GETDATE()
+--        BEGIN
+--            RAISERROR('DateOfHire cannot be in the future.', 16, 1);
+--            RETURN;
+--        END;
+
+--        UPDATE Employees
+--        SET DateOfHire = COALESCE(@DateOfHire, DateOfHire)
+--        WHERE EmployeeID = @EmployeeID;
+
+--        IF @@ROWCOUNT = 0
+--        BEGIN
+--            RAISERROR('EmployeeID not found.', 16, 1);
+--        END;
+--    END TRY
+--    BEGIN CATCH
+--        THROW;
+--    END CATCH;
+--END;
+
+--CREATE OR ALTER PROCEDURE p_DeleteEmployee
+--(
+--    @EmployeeID INT
+--)
+--AS
+--BEGIN
+--    SET NOCOUNT ON;
+
+--    BEGIN TRY
+--        -- Usuwanie zależnych danych w powiązanych tabelach
+--        DELETE FROM EmployeesSuperior WHERE EmployeeID = @EmployeeID;
+--        DELETE FROM EmployeeDegree WHERE EmployeeID = @EmployeeID;
+
+--        -- Usuwanie pracownika
+--        DELETE FROM Employees WHERE EmployeeID = @EmployeeID;
+
+--        IF @@ROWCOUNT = 0
+--        BEGIN
+--            RAISERROR('EmployeeID not found.', 16, 1);
+--        END;
+--    END TRY
+--    BEGIN CATCH
+--        THROW;
+--    END CATCH;
+--END;
+
+--CREATE OR ALTER PROCEDURE p_AssignSupervisor
+--(
+--    @EmployeeID INT,
+--    @SupervisorID INT
+--)
+--AS
+--BEGIN
+--    SET NOCOUNT ON;
+
+--    BEGIN TRY
+--        -- Sprawdzenie, czy przełożony istnieje
+--        IF NOT EXISTS (SELECT 1 FROM Employees WHERE EmployeeID = @SupervisorID)
+--        BEGIN
+--            RAISERROR('SupervisorID not found.', 16, 1);
+--            RETURN;
+--        END;
+
+--        -- Aktualizacja tabeli przełożonych
+--        UPDATE EmployeesSuperior
+--        SET ReportsTo = @SupervisorID
+--        WHERE EmployeeID = @EmployeeID;
+
+--        IF @@ROWCOUNT = 0
+--        BEGIN
+--            INSERT INTO EmployeesSuperior (EmployeeID, ReportsTo)
+--            VALUES (@EmployeeID, @SupervisorID);
+--        END;
+--    END TRY
+--    BEGIN CATCH
+--        THROW;
+--    END CATCH;
+--END;
+
+--CREATE OR ALTER PROCEDURE p_AddUserAddress
+--(
+--    @UserID INT,
+--    @Address VARCHAR(30),
+--    @PostalCode VARCHAR(10),
+--    @LocationID INT
+--)
+--AS
+--BEGIN
+--    SET NOCOUNT ON;
+
+--    BEGIN TRY
+--        INSERT INTO UserAddressDetails (UserID, Address, PostalCode, LocationID)
+--        VALUES (@UserID, @Address, @PostalCode, @LocationID);
+--    END TRY
+--    BEGIN CATCH
+--        THROW;
+--    END CATCH;
+--END;
+
+--CREATE OR ALTER PROCEDURE p_UpdateUserAddress
+--(
+--    @UserID INT,
+--    @Address VARCHAR(30) = NULL,
+--    @PostalCode VARCHAR(10) = NULL,
+--    @LocationID INT = NULL
+--)
+--AS
+--BEGIN
+--    SET NOCOUNT ON;
+
+--    BEGIN TRY
+--        UPDATE UserAddressDetails
+--        SET 
+--            Address = COALESCE(@Address, Address),
+--            PostalCode = COALESCE(@PostalCode, PostalCode),
+--            LocationID = COALESCE(@LocationID, LocationID)
+--        WHERE UserID = @UserID;
+
+--        IF @@ROWCOUNT = 0
+--        BEGIN
+--            RAISERROR('UserID not found.', 16, 1);
+--        END;
+--    END TRY
+--    BEGIN CATCH
+--        THROW;
+--    END CATCH;
+--END;
+
+--CREATE OR ALTER PROCEDURE p_DeleteUserAddress
+--(
+--    @UserID INT
+--)
+--AS
+--BEGIN
+--    SET NOCOUNT ON;
+
+--    BEGIN TRY
+--        DELETE FROM UserAddressDetails WHERE UserID = @UserID;
+
+--        IF @@ROWCOUNT = 0
+--        BEGIN
+--            RAISERROR('UserID not found.', 16, 1);
+--        END;
+--    END TRY
+--    BEGIN CATCH
+--        THROW;
+--    END CATCH;
+--END;
+
+--CREATE OR ALTER PROCEDURE p_AddUserContact
+--(
+--    @UserID INT,
+--    @Email VARCHAR(30),
+--    @Phone VARCHAR(30) = NULL
+--)
+--AS
+--BEGIN
+--    SET NOCOUNT ON;
+
+--    BEGIN TRY
+--        -- Walidacja numeru telefonu (jeśli nie jest NULL)
+--        IF @Phone IS NOT NULL AND NOT (@Phone LIKE '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]')
+--        BEGIN
+--            RAISERROR('Phone number must be exactly 9 digits.', 16, 1);
+--            RETURN;
+--        END;
+
+--        INSERT INTO UserContact (UserID, Email, Phone)
+--        VALUES (@UserID, @Email, @Phone);
+--    END TRY
+--    BEGIN CATCH
+--        THROW;
+--    END CATCH;
+--END;
+
+--CREATE OR ALTER PROCEDURE p_UpdateUserContact
+--(
+--    @UserID INT,
+--    @Email VARCHAR(30) = NULL,
+--    @Phone VARCHAR(30) = NULL
+--)
+--AS
+--BEGIN
+--    SET NOCOUNT ON;
+
+--    BEGIN TRY
+--        -- Walidacja numeru telefonu (jeśli nie jest NULL)
+--        IF @Phone IS NOT NULL AND NOT (@Phone LIKE '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]')
+--        BEGIN
+--            RAISERROR('Phone number must be exactly 9 digits.', 16, 1);
+--            RETURN;
+--        END;
+
+--        UPDATE UserContact
+--        SET 
+--            Email = COALESCE(@Email, Email),
+--            Phone = COALESCE(@Phone, Phone)
+--        WHERE UserID = @UserID;
+
+--        IF @@ROWCOUNT = 0
+--        BEGIN
+--            RAISERROR('UserID not found.', 16, 1);
+--        END;
+--    END TRY
+--    BEGIN CATCH
+--        THROW;
+--    END CATCH;
+--END;
+
+--CREATE OR ALTER PROCEDURE p_DeleteUserContact
+--(
+--    @UserID INT
+--)
+--AS
+--BEGIN
+--    SET NOCOUNT ON;
+
+--    BEGIN TRY
+--        DELETE FROM UserContact WHERE UserID = @UserID;
+
+--        IF @@ROWCOUNT = 0
+--        BEGIN
+--            RAISERROR('UserID not found.', 16, 1);
+--        END;
+--    END TRY
+--    BEGIN CATCH
+--        THROW;
+--    END CATCH;
+--END;
+
+--CREATE OR ALTER PROCEDURE p_AddUserType
+--(
+--    @UserTypeID INT,
+--    @UserTypeName VARCHAR(30)
+--)
+--AS
+--BEGIN
+--    SET NOCOUNT ON;
+
+--    BEGIN TRY
+--        INSERT INTO UserType (UserTypeID, UserTypeName)
+--        VALUES (@UserTypeID, @UserTypeName);
+--    END TRY
+--    BEGIN CATCH
+--        THROW;
+--    END CATCH;
+--END;
+
+--CREATE OR ALTER PROCEDURE p_UpdateUserType
+--(
+--    @UserTypeID INT,
+--    @UserTypeName VARCHAR(30)
+--)
+--AS
+--BEGIN
+--    SET NOCOUNT ON;
+
+--    BEGIN TRY
+--        UPDATE UserType
+--        SET UserTypeName = @UserTypeName
+--        WHERE UserTypeID = @UserTypeID;
+
+--        IF @@ROWCOUNT = 0
+--        BEGIN
+--            RAISERROR('UserTypeID not found.', 16, 1);
+--        END;
+--    END TRY
+--    BEGIN CATCH
+--        THROW;
+--    END CATCH;
+--END;
+
+--CREATE OR ALTER PROCEDURE p_DeleteUserType
+--(
+--    @UserTypeID INT
+--)
+--AS
+--BEGIN
+--    SET NOCOUNT ON;
+
+--    BEGIN TRY
+--        DELETE FROM UserType WHERE UserTypeID = @UserTypeID;
+
+--        IF @@ROWCOUNT = 0
+--        BEGIN
+--            RAISERROR('UserTypeID not found.', 16, 1);
+--        END;
+--    END TRY
+--    BEGIN CATCH
+--        THROW;
+--    END CATCH;
+--END;
+
+--CREATE OR ALTER PROCEDURE p_AddDegree
+--(
+--    @DegreeID INT,
+--    @DegreeLevel VARCHAR(30),
+--    @DegreeName VARCHAR(30)
+--)
+--AS
+--BEGIN
+--    SET NOCOUNT ON;
+
+--    BEGIN TRY
+--        INSERT INTO Degrees (DegreeID, DegreeLevel, DegreeName)
+--        VALUES (@DegreeID, @DegreeLevel, @DegreeName);
+--    END TRY
+--    BEGIN CATCH
+--        THROW;
+--    END CATCH;
+--END;
+
+--CREATE OR ALTER PROCEDURE p_UpdateDegree
+--(
+--    @DegreeID INT,
+--    @DegreeLevel VARCHAR(30),
+--    @DegreeName VARCHAR(30)
+--)
+--AS
+--BEGIN
+--    SET NOCOUNT ON;
+
+--    BEGIN TRY
+--        UPDATE Degrees
+--        SET 
+--            DegreeLevel = @DegreeLevel,
+--            DegreeName = @DegreeName
+--        WHERE DegreeID = @DegreeID;
+
+--        IF @@ROWCOUNT = 0
+--        BEGIN
+--            RAISERROR('DegreeID not found.', 16, 1);
+--        END;
+--    END TRY
+--    BEGIN CATCH
+--        THROW;
+--    END CATCH;
+--END;
+
+--CREATE OR ALTER PROCEDURE p_DeleteDegree
+--(
+--    @DegreeID INT
+--)
+--AS
+--BEGIN
+--    SET NOCOUNT ON;
+
+--    BEGIN TRY
+--        DELETE FROM Degrees WHERE DegreeID = @DegreeID;
+
+--        IF @@ROWCOUNT = 0
+--        BEGIN
+--            RAISERROR('DegreeID not found.', 16, 1);
+--        END;
+--    END TRY
+--    BEGIN CATCH
+--        THROW;
+--    END CATCH;
+--END;
+
+--CREATE OR ALTER PROCEDURE p_AddEmployeeDegree
+--(
+--    @EmployeeID INT,
+--    @DegreeID INT
+--)
+--AS
+--BEGIN
+--    SET NOCOUNT ON;
+
+--    BEGIN TRY
+--        INSERT INTO EmployeeDegree (EmployeeID, DegreeID)
+--        VALUES (@EmployeeID, @DegreeID);
+--    END TRY
+--    BEGIN CATCH
+--        THROW;
+--    END CATCH;
+--END;
+
+--CREATE OR ALTER PROCEDURE p_UpdateEmployeeDegree
+--(
+--    @EmployeeID INT,
+--    @OldDegreeID INT,
+--    @NewDegreeID INT
+--)
+--AS
+--BEGIN
+--    SET NOCOUNT ON;
+
+--    BEGIN TRY
+--        BEGIN TRANSACTION;
+
+--        -- Sprawdzenie, czy stary stopień istnieje dla pracownika
+--        IF NOT EXISTS (
+--            SELECT 1
+--            FROM EmployeeDegree
+--            WHERE EmployeeID = @EmployeeID AND DegreeID = @OldDegreeID
+--        )
+--        BEGIN
+--            RAISERROR('Old degree not found for the specified employee.', 16, 1);
+--            ROLLBACK TRANSACTION;
+--            RETURN;
+--        END;
+
+--        -- Sprawdzenie, czy nowy stopień istnieje w tabeli Degrees
+--        IF NOT EXISTS (
+--            SELECT 1
+--            FROM Degrees
+--            WHERE DegreeID = @NewDegreeID
+--        )
+--        BEGIN
+--            RAISERROR('New degree does not exist.', 16, 1);
+--            ROLLBACK TRANSACTION;
+--            RETURN;
+--        END;
+
+--        -- Aktualizacja stopnia naukowego pracownika
+--        UPDATE EmployeeDegree
+--        SET DegreeID = @NewDegreeID
+--        WHERE EmployeeID = @EmployeeID AND DegreeID = @OldDegreeID;
+
+--        COMMIT TRANSACTION;
+--    END TRY
+
+--    BEGIN CATCH
+--        IF @@TRANCOUNT > 0
+--            ROLLBACK TRANSACTION;
+
+--        THROW;
+--    END CATCH;
+--END;
+
+
+--CREATE OR ALTER PROCEDURE p_DeleteEmployeeDegree
+--(
+--    @EmployeeID INT,
+--    @DegreeID INT
+--)
+--AS
+--BEGIN
+--    SET NOCOUNT ON;
+
+--    BEGIN TRY
+--        BEGIN TRANSACTION;
+
+--        -- Sprawdzenie, czy wpis istnieje w tabeli EmployeeDegree
+--        IF NOT EXISTS (
+--            SELECT 1
+--            FROM EmployeeDegree
+--            WHERE EmployeeID = @EmployeeID AND DegreeID = @DegreeID
+--        )
+--        BEGIN
+--            RAISERROR('No matching record found in EmployeeDegree.', 16, 1);
+--            ROLLBACK TRANSACTION;
+--            RETURN;
+--        END;
+
+--        -- Usunięcie wpisu z tabeli EmployeeDegree
+--        DELETE FROM EmployeeDegree
+--        WHERE EmployeeID = @EmployeeID AND DegreeID = @DegreeID;
+
+--        COMMIT TRANSACTION;
+--    END TRY
+
+--    BEGIN CATCH
+--        IF @@TRANCOUNT > 0
+--            ROLLBACK TRANSACTION;
+
+--        -- Rzucenie błędu dalej
+--        THROW;
+--    END CATCH;
+--END;
+
+
+--CREATE OR ALTER PROCEDURE p_AddTranslator
+--(
+--    @TranslatorID INT
+--)
+--AS
+--BEGIN
+--    SET NOCOUNT ON;
+
+--    BEGIN TRY
+--        INSERT INTO Translators (TranslatorID)
+--        VALUES (@TranslatorID);
+--    END TRY
+--    BEGIN CATCH
+--        THROW;
+--    END CATCH;
+--END;
+
+--CREATE OR ALTER PROCEDURE p_DeleteTranslator
+--(
+--    @TranslatorID INT
+--)
+--AS
+--BEGIN
+--    SET NOCOUNT ON;
+
+--    BEGIN TRY
+--        DELETE FROM Translators WHERE TranslatorID = @TranslatorID;
+
+--        IF @@ROWCOUNT = 0
+--        BEGIN
+--            RAISERROR('TranslatorID not found.', 16, 1);
+--        END;
+--    END TRY
+--    BEGIN CATCH
+--        THROW;
+--    END CATCH;
+--END;
+
+--CREATE OR ALTER PROCEDURE p_AddLanguage
+--(
+--    @LanguageID INT,
+--    @LanguageName VARCHAR(30)
+--)
+--AS
+--BEGIN
+--    SET NOCOUNT ON;
+
+--    BEGIN TRY
+--        INSERT INTO Languages (LanguageID, LanguageName)
+--        VALUES (@LanguageID, @LanguageName);
+--    END TRY
+--    BEGIN CATCH
+--        THROW;
+--    END CATCH;
+--END;
+
+--CREATE OR ALTER PROCEDURE p_UpdateLanguage
+--(
+--    @LanguageID INT,
+--    @LanguageName VARCHAR(30)
+--)
+--AS
+--BEGIN
+--    SET NOCOUNT ON;
+
+--    BEGIN TRY
+--        UPDATE Languages
+--        SET LanguageName = @LanguageName
+--        WHERE LanguageID = @LanguageID;
+
+--        IF @@ROWCOUNT = 0
+--        BEGIN
+--            RAISERROR('LanguageID not found.', 16, 1);
+--        END;
+--    END TRY
+--    BEGIN CATCH
+--        THROW;
+--    END CATCH;
+--END;
+
+--CREATE OR ALTER PROCEDURE p_DeleteLanguage
+--(
+--    @LanguageID INT
+--)
+--AS
+--BEGIN
+--    SET NOCOUNT ON;
+
+--    BEGIN TRY
+--        DELETE FROM Languages WHERE LanguageID = @LanguageID;
+
+--        IF @@ROWCOUNT = 0
+--        BEGIN
+--            RAISERROR('LanguageID not found.', 16, 1);
+--        END;
+--    END TRY
+--    BEGIN CATCH
+--        THROW;
+--    END CATCH;
+--END;
+
+--CREATE OR ALTER PROCEDURE p_AddTranslatorLanguage
+--(
+--    @TranslatorID INT,
+--    @LanguageID INT
+--)
+--AS
+--BEGIN
+--    SET NOCOUNT ON;
+
+--    BEGIN TRY
+--        INSERT INTO TranslatorsLanguages (TranslatorID, LanguageID)
+--        VALUES (@TranslatorID, @LanguageID);
+--    END TRY
+--    BEGIN CATCH
+--        THROW;
+--    END CATCH;
+--END;
+
+--CREATE OR ALTER PROCEDURE p_DeleteTranslatorLanguage
+--(
+--    @TranslatorID INT,
+--    @LanguageID INT
+--)
+--AS
+--BEGIN
+--    SET NOCOUNT ON;
+
+--    BEGIN TRY
+--        DELETE FROM TranslatorsLanguages
+--        WHERE TranslatorID = @TranslatorID AND LanguageID = @LanguageID;
+
+--        IF @@ROWCOUNT = 0
+--        BEGIN
+--            RAISERROR('TranslatorID and/or LanguageID not found.', 16, 1);
+--        END;
+--    END TRY
+--    BEGIN CATCH
+--        THROW;
+--    END CATCH;
+--END;
+
+--CREATE OR ALTER PROCEDURE p_AddLocation
+--(
+--    @LocationID INT,
+--    @CountryName VARCHAR(30),
+--    @ProvinceName VARCHAR(50) = NULL,
+--    @CityName VARCHAR(50)
+--)
+--AS
+--BEGIN
+--    SET NOCOUNT ON;
+
+--    BEGIN TRY
+--        INSERT INTO Locations (LocationID, CountryName, ProvinceName, CityName)
+--        VALUES (@LocationID, @CountryName, @ProvinceName, @CityName);
+--    END TRY
+--    BEGIN CATCH
+--        THROW;
+--    END CATCH;
+--END;
+
+--CREATE OR ALTER PROCEDURE p_UpdateLocation
+--(
+--    @LocationID INT,
+--    @CountryName VARCHAR(30) = NULL,
+--    @ProvinceName VARCHAR(50) = NULL,
+--    @CityName VARCHAR(50) = NULL
+--)
+--AS
+--BEGIN
+--    SET NOCOUNT ON;
+
+--    BEGIN TRY
+--        UPDATE Locations
+--        SET 
+--            CountryName = COALESCE(@CountryName, CountryName),
+--            ProvinceName = COALESCE(@ProvinceName, ProvinceName),
+--            CityName = COALESCE(@CityName, CityName)
+--        WHERE LocationID = @LocationID;
+
+--        IF @@ROWCOUNT = 0
+--        BEGIN
+--            RAISERROR('LocationID not found.', 16, 1);
+--        END;
+--    END TRY
+--    BEGIN CATCH
+--        THROW;
+--    END CATCH;
+--END;
+
+--CREATE OR ALTER PROCEDURE p_DeleteLocation
+--(
+--    @LocationID INT
+--)
+--AS
+--BEGIN
+--    SET NOCOUNT ON;
+
+--    BEGIN TRY
+--        DELETE FROM Locations WHERE LocationID = @LocationID;
+
+--        IF @@ROWCOUNT = 0
+--        BEGIN
+--            RAISERROR('LocationID not found.', 16, 1);
+--        END;
+--    END TRY
+--    BEGIN CATCH
+--        THROW;
+--    END CATCH;
+--END;
