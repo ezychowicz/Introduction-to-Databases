@@ -3047,7 +3047,6 @@
 
 
 -- EMIL=============================================================================
-
 -- CREATE OR ALTER PROCEDURE p_EditClassMeetingService
 -- (
 --     @ServiceID INT,
@@ -3525,7 +3524,8 @@
 --         THROW;
 --     END CATCH;
 -- END;
--- CREATE OR ALTER PROCEDURE p_EditOnlineLiveMeetingDetails
+
+-- CREATE OR ALTER PROCEDURE p_EditOnlineLiveAttendance
 -- (
 --     @MeetingID INT,
 --     @ParticipantID INT,
@@ -3559,6 +3559,8 @@
 --         THROW;
 --     END CATCH;
 -- END;
+
+
 -- CREATE OR ALTER PROCEDURE p_EditPayment
 -- (
 --     @PaymentID INT,
@@ -3789,6 +3791,49 @@
 --         UPDATE WebinarService
 --         SET Price = @Price
 --         WHERE ServiceID = @ServiceID;
+
+--         COMMIT TRANSACTION;
+--     END TRY
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+
+--         THROW;
+--     END CATCH;
+-- END;
+
+-- CREATE OR ALTER PROCEDURE p_EditOrder
+-- (
+--     @OrderID INT,
+--     @PaymentLink VARCHAR(60) = NULL,  
+--     @OrderDate DATETIME = NULL 
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+--         IF NOT EXISTS (SELECT 1 FROM Orders WHERE OrderID = @OrderID)
+--         BEGIN
+--             RAISERROR('Invalid OrderID: no matching order found.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         IF @OrderDate IS NOT NULL AND @OrderDate > GETDATE()
+--         BEGIN
+--             RAISERROR('OrderDate cannot be in the future.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         UPDATE Orders
+--         SET 
+--             PaymentLink = CASE WHEN @PaymentLink IS NOT NULL THEN @PaymentLink ELSE PaymentLink END,
+--             OrderDate = CASE WHEN @OrderDate IS NOT NULL THEN @OrderDate ELSE OrderDate END
+--         WHERE OrderID = @OrderID;
 
 --         COMMIT TRANSACTION;
 --     END TRY
