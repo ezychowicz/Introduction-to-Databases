@@ -3008,3 +3008,2094 @@
 -- END;
 
 -- Select dbo.p_CalculateMINRoomCapacity(1) as MINRoomCapacity;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-- EMIL=============================================================================
+
+-- CREATE OR ALTER PROCEDURE p_EditClassMeetingService
+-- (
+--     @ServiceID INT,
+--     @PriceStudents MONEY = NULL,  -- Domyślnie NULL
+--     @PriceOthers MONEY = NULL     -- Domyślnie NULL
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+       
+--         IF NOT EXISTS (SELECT 1 FROM ClassMeetingService WHERE ServiceID = @ServiceID)
+--         BEGIN
+--             RAISERROR('Invalid ServiceID: no matching service found in ClassMeetingService.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+        
+--         IF @PriceStudents IS NOT NULL AND @PriceStudents <= 0
+--         BEGIN
+--             RAISERROR('PriceStudents must be greater than 0.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         IF @PriceOthers IS NOT NULL AND @PriceOthers <= 0
+--         BEGIN
+--             RAISERROR('PriceOthers must be greater than 0.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+       
+--         UPDATE ClassMeetingService
+--         SET 
+--             PriceStudents = CASE WHEN @PriceStudents IS NOT NULL THEN @PriceStudents ELSE PriceStudents END,
+--             PriceOthers = CASE WHEN @PriceOthers IS NOT NULL THEN @PriceOthers ELSE PriceOthers END
+--         WHERE ServiceID = @ServiceID;
+
+--         COMMIT TRANSACTION;
+--     END TRY
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+
+--         THROW;
+--     END CATCH;
+-- END;
+-- CREATE OR ALTER PROCEDURE p_EditConventionService
+-- (
+--     @ServiceID INT,
+--     @Price MONEY
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+
+--         IF NOT EXISTS (SELECT 1 FROM ConventionService WHERE ServiceID = @ServiceID)
+--         BEGIN
+--             RAISERROR('Invalid ServiceID: no matching service found in ConventionService.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+ 
+--         IF @Price <= 0
+--         BEGIN
+--             RAISERROR('Price must be greater than 0.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+     
+--         UPDATE ConventionService
+--         SET Price = @Price
+--         WHERE ServiceID = @ServiceID;
+
+--         COMMIT TRANSACTION;
+--     END TRY
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+
+--         THROW;
+--     END CATCH;
+-- END;
+-- CREATE OR ALTER PROCEDURE p_EditCourses
+-- (
+--     @CourseID INT,
+--     @CourseName VARCHAR(40) = NULL,
+--     @CourseDescription VARCHAR(255) = NULL,
+--     @CourseCoordinatorID INT = NULL,
+--     @CourseDate DATE = NULL,
+--     @EnrollmentLimit INT = NULL
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+      
+--         IF NOT EXISTS (SELECT 1 FROM Courses WHERE CourseID = @CourseID)
+--         BEGIN
+--             RAISERROR('Invalid CourseID: no matching course found.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+      
+--         IF @CourseName IS NOT NULL
+--         BEGIN
+--             IF @CourseName = ''
+--             BEGIN
+--                 RAISERROR('CourseName cannot be empty.', 16, 2);
+--                 ROLLBACK TRANSACTION;
+--                 RETURN;
+--             END;
+--             UPDATE Courses
+--             SET CourseName = @CourseName
+--             WHERE CourseID = @CourseID;
+--         END;
+
+
+--         IF @CourseDescription IS NOT NULL
+--         BEGIN
+--             UPDATE Courses
+--             SET CourseDescription = @CourseDescription
+--             WHERE CourseID = @CourseID;
+--         END;
+
+
+--         IF @CourseCoordinatorID IS NOT NULL
+--         BEGIN
+--             IF @CourseCoordinatorID <= 0
+--             BEGIN
+--                 RAISERROR('Invalid CourseCoordinatorID: must be greater than 0.', 16, 3);
+--                 ROLLBACK TRANSACTION;
+--                 RETURN;
+--             END;
+--             UPDATE Courses
+--             SET CourseCoordinatorID = @CourseCoordinatorID
+--             WHERE CourseID = @CourseID;
+--         END;
+
+
+--         IF @CourseDate IS NOT NULL
+--         BEGIN
+--             IF @CourseDate <= '2015-01-01' OR @CourseDate >= '2030-01-01'
+--             BEGIN
+--                 RAISERROR('CourseDate must be between 01-01-2015 and 01-01-2030.', 16, 5);
+--                 ROLLBACK TRANSACTION;
+--                 RETURN;
+--             END;
+--             UPDATE Courses
+--             SET CourseDate = @CourseDate
+--             WHERE CourseID = @CourseID;
+--         END;
+
+ 
+--         IF @EnrollmentLimit IS NOT NULL
+--         BEGIN
+--             IF @EnrollmentLimit <= 1
+--             BEGIN
+--                 RAISERROR('EnrollmentLimit must be greater than 1.', 16, 6);
+--                 ROLLBACK TRANSACTION;
+--                 RETURN;
+--             END;
+--             UPDATE Courses
+--             SET EnrollmentLimit = @EnrollmentLimit
+--             WHERE CourseID = @CourseID;
+--         END;
+
+     
+--         COMMIT TRANSACTION;
+--     END TRY
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+
+--         THROW;
+--     END CATCH;
+-- END;
+-- CREATE OR ALTER PROCEDURE p_EditCourseService
+-- (
+--     @ServiceID INT,
+--     @AdvanceValue MONEY = NULL,  -- Domyślnie NULL
+--     @FullPrice MONEY = NULL      -- Domyślnie NULL
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+--         IF NOT EXISTS (SELECT 1 FROM CourseService WHERE ServiceID = @ServiceID)
+--         BEGIN
+--             RAISERROR('Invalid ServiceID: no matching service found in CourseService.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+     
+--         IF @AdvanceValue IS NOT NULL AND @AdvanceValue <= 0
+--         BEGIN
+--             RAISERROR('AdvanceValue must be greater than 0.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         IF @FullPrice IS NOT NULL AND @FullPrice < @AdvanceValue
+--         BEGIN
+--             RAISERROR('FullPrice must be greater than or equal to AdvanceValue.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+       
+--         UPDATE CourseService
+--         SET 
+--             AdvanceValue = CASE WHEN @AdvanceValue IS NOT NULL THEN @AdvanceValue ELSE AdvanceValue END,
+--             FullPrice = CASE WHEN @FullPrice IS NOT NULL THEN @FullPrice ELSE FullPrice END
+--         WHERE ServiceID = @ServiceID;
+
+--         COMMIT TRANSACTION;
+--     END TRY
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+
+--         THROW;
+--     END CATCH;
+-- END;
+-- CREATE OR ALTER PROCEDURE p_EditModules
+-- (
+--     @ModuleID INT,
+--     @LanguageID INT = NULL,
+--     @CourseID INT = NULL,
+--     @TranslatorID INT = NULL,
+--     @ModuleCoordinatorID INT = NULL,
+--     @ModuleType VARCHAR(30) = NULL
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+--         IF NOT EXISTS (SELECT 1 FROM Modules WHERE ModuleID = @ModuleID)
+--         BEGIN
+--             RAISERROR('Invalid ModuleID: no matching module found.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         IF @LanguageID IS NOT NULL
+--         BEGIN
+--             UPDATE Modules
+--             SET LanguageID = @LanguageID
+--             WHERE ModuleID = @ModuleID;
+--         END;
+
+--         IF @CourseID IS NOT NULL
+--         BEGIN
+--             UPDATE Modules
+--             SET CourseID = @CourseID
+--             WHERE ModuleID = @ModuleID;
+--         END;
+
+--         IF @TranslatorID IS NOT NULL
+--         BEGIN
+--             UPDATE Modules
+--             SET TranslatorID = @TranslatorID
+--             WHERE ModuleID = @ModuleID;
+--         END;
+
+--         IF @ModuleCoordinatorID IS NOT NULL
+--         BEGIN
+--             UPDATE Modules
+--             SET ModuleCoordinatorID = @ModuleCoordinatorID
+--             WHERE ModuleID = @ModuleID;
+--         END;
+
+--         IF @ModuleType IS NOT NULL
+--         BEGIN
+--             IF @ModuleType = ''
+--             BEGIN
+--                 RAISERROR('ModuleType cannot be empty.', 16, 2);
+--                 ROLLBACK TRANSACTION;
+--                 RETURN;
+--             END;
+--             UPDATE Modules
+--             SET ModuleType = @ModuleType
+--             WHERE ModuleID = @ModuleID;
+--         END;
+
+--         COMMIT TRANSACTION;
+--     END TRY
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+
+--         THROW;
+--     END CATCH;
+-- END;
+-- CREATE OR ALTER PROCEDURE p_EditOfflineVideo
+-- (
+--     @MeetingID INT,
+--     @VideoLink VARCHAR(60) = NULL,
+--     @VideoDuration TIME(0) = NULL,
+--     @TeacherID INT = NULL
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+--         IF NOT EXISTS (SELECT 1 FROM OfflineVideo WHERE MeetingID = @MeetingID)
+--         BEGIN
+--             RAISERROR('Invalid MeetingID: no matching offline video found.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         IF @VideoLink IS NOT NULL
+--         BEGIN
+--             UPDATE OfflineVideo
+--             SET VideoLink = @VideoLink
+--             WHERE MeetingID = @MeetingID;
+--         END;
+
+--         IF @VideoDuration IS NOT NULL
+--         BEGIN
+--             UPDATE OfflineVideo
+--             SET VideoDuration = @VideoDuration
+--             WHERE MeetingID = @MeetingID;
+--         END;
+
+--         IF @TeacherID IS NOT NULL
+--         BEGIN
+--             UPDATE OfflineVideo
+--             SET TeacherID = @TeacherID
+--             WHERE MeetingID = @MeetingID;
+--         END;
+
+--         COMMIT TRANSACTION;
+--     END TRY
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+
+--         THROW;
+--     END CATCH;
+-- END;
+-- CREATE OR ALTER PROCEDURE p_EditOfflineVideoDateOfViewing
+-- (
+--     @MeetingID INT,
+--     @ParticipantID INT,
+--     @DateOfViewing DATE 
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+--         IF NOT EXISTS (SELECT 1 FROM OfflineVideoDetails WHERE MeetingID = @MeetingID AND ParticipantID = @ParticipantID)
+--         BEGIN
+--             RAISERROR('Invalid MeetingID or ParticipantID: no matching record found.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+       
+--         UPDATE OfflineVideoDetails
+--         SET DateOfViewing = @DateOfViewing
+--         WHERE MeetingID = @MeetingID AND ParticipantID = @ParticipantID;
+       
+
+--         COMMIT TRANSACTION;
+--     END TRY
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+
+--         THROW;
+--     END CATCH;
+-- END;
+-- CREATE OR ALTER PROCEDURE p_EditOnlineLiveMeeting
+-- (
+--     @MeetingID INT,
+--     @PlatformName VARCHAR(20) = NULL,
+--     @Link VARCHAR(60) = NULL,
+--     @VideoLink VARCHAR(60) = NULL,
+--     @MeetingDate DATETIME = NULL,
+--     @MeetingDuration TIME(0) = NULL,
+--     @TeacherID INT = NULL
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+--         IF NOT EXISTS (SELECT 1 FROM OnlineLiveMeeting WHERE MeetingID = @MeetingID)
+--         BEGIN
+--             RAISERROR('Invalid MeetingID: no matching online live meeting found.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         IF @PlatformName IS NOT NULL
+--         BEGIN
+--             UPDATE OnlineLiveMeeting
+--             SET PlatformName = @PlatformName
+--             WHERE MeetingID = @MeetingID;
+--         END;
+
+--         IF @Link IS NOT NULL
+--         BEGIN
+--             UPDATE OnlineLiveMeeting
+--             SET Link = @Link
+--             WHERE MeetingID = @MeetingID;
+--         END;
+
+--         IF @VideoLink IS NOT NULL
+--         BEGIN
+--             UPDATE OnlineLiveMeeting
+--             SET VideoLink = @VideoLink
+--             WHERE MeetingID = @MeetingID;
+--         END;
+
+--         IF @MeetingDate IS NOT NULL
+--         BEGIN
+--             UPDATE OnlineLiveMeeting
+--             SET MeetingDate = @MeetingDate
+--             WHERE MeetingID = @MeetingID;
+--         END;
+
+--         IF @MeetingDuration IS NOT NULL
+--         BEGIN
+--             UPDATE OnlineLiveMeeting
+--             SET MeetingDuration = @MeetingDuration
+--             WHERE MeetingID = @MeetingID;
+--         END;
+
+--         IF @TeacherID IS NOT NULL
+--         BEGIN
+--             UPDATE OnlineLiveMeeting
+--             SET TeacherID = @TeacherID
+--             WHERE MeetingID = @MeetingID;
+--         END;
+
+--         COMMIT TRANSACTION;
+--     END TRY
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+
+--         THROW;
+--     END CATCH;
+-- END;
+-- CREATE OR ALTER PROCEDURE p_EditOnlineLiveMeetingDetails
+-- (
+--     @MeetingID INT,
+--     @ParticipantID INT,
+--     @Attendance BIT 
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+--         IF NOT EXISTS (SELECT 1 FROM OnlineLiveMeetingDetails WHERE MeetingID = @MeetingID AND ParticipantID = @ParticipantID)
+--         BEGIN
+--             RAISERROR('Invalid MeetingID or ParticipantID: no matching record found.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+     
+--         UPDATE OnlineLiveMeetingDetails
+--         SET Attendance = @Attendance
+--         WHERE MeetingID = @MeetingID AND ParticipantID = @ParticipantID;
+    
+
+--         COMMIT TRANSACTION;
+--     END TRY
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+--         THROW;
+--     END CATCH;
+-- END;
+-- CREATE OR ALTER PROCEDURE p_EditPayment
+-- (
+--     @PaymentID INT,
+--     @PaymentValue MONEY = NULL,  -- Domyślnie NULL
+--     @PaymentDate DATETIME = NULL -- Domyślnie NULL
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+        
+--         IF NOT EXISTS (SELECT 1 FROM Payments WHERE PaymentID = @PaymentID)
+--         BEGIN
+--             RAISERROR('Invalid PaymentID: no matching payment found.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+       
+--         IF @PaymentValue IS NOT NULL AND @PaymentValue <= 0
+--         BEGIN
+--             RAISERROR('PaymentValue must be greater than 0.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+       
+--         UPDATE Payments
+--         SET 
+--             PaymentValue = CASE WHEN @PaymentValue IS NOT NULL THEN @PaymentValue ELSE PaymentValue END,
+--             PaymentDate = CASE WHEN @PaymentDate IS NOT NULL THEN @PaymentDate ELSE PaymentDate END
+--         WHERE PaymentID = @PaymentID;
+
+--         COMMIT TRANSACTION;
+--     END TRY
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+
+--         THROW;
+--     END CATCH;
+-- END;
+-- CREATE OR ALTER PROCEDURE p_EditStationaryMeeting
+-- (
+--     @MeetingID INT,
+--     @MeetingDate DATETIME = NULL,
+--     @MeetingDuration TIME(0) = NULL,
+--     @RoomID INT = NULL,
+--     @GroupSize INT = NULL,
+--     @TeacherID INT = NULL
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+--         IF NOT EXISTS (SELECT 1 FROM StationaryMeeting WHERE MeetingID = @MeetingID)
+--         BEGIN
+--             RAISERROR('Invalid MeetingID: no matching meeting found.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         IF @MeetingDate IS NOT NULL
+--         BEGIN
+--             UPDATE StationaryMeeting
+--             SET MeetingDate = @MeetingDate
+--             WHERE MeetingID = @MeetingID;
+--         END;
+
+--         IF @MeetingDuration IS NOT NULL
+--         BEGIN
+--             UPDATE StationaryMeeting
+--             SET MeetingDuration = @MeetingDuration
+--             WHERE MeetingID = @MeetingID;
+--         END;
+
+
+-- 		IF @GroupSize <= (SELECT Capacity FROM Rooms WHERE RoomID = @RoomID)
+--         BEGIN
+--             RAISERROR('Incompatible Room: not enough capacity', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         IF @RoomID IS NOT NULL
+--         BEGIN
+--             UPDATE StationaryMeeting
+--             SET RoomID = @RoomID
+--             WHERE MeetingID = @MeetingID;
+--         END;
+
+--         IF @GroupSize IS NOT NULL
+--         BEGIN
+--             UPDATE StationaryMeeting
+--             SET GroupSize = @GroupSize
+--             WHERE MeetingID = @MeetingID;
+--         END;
+
+--         IF @TeacherID IS NOT NULL
+--         BEGIN
+--             UPDATE StationaryMeeting
+--             SET TeacherID = @TeacherID
+--             WHERE MeetingID = @MeetingID;
+--         END;
+
+--         COMMIT TRANSACTION;
+--     END TRY
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+
+--         THROW;
+--     END CATCH;
+-- END;
+-- CREATE OR ALTER PROCEDURE p_EditStationaryMeetingAttendance
+-- (
+--     @MeetingID INT,
+--     @ParticipantID INT,
+--     @Attendance BIT = NULL
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+--         IF NOT EXISTS (SELECT 1 FROM StationaryMeetingDetails WHERE MeetingID = @MeetingID AND ParticipantID = @ParticipantID)
+--         BEGIN
+--             RAISERROR('Invalid MeetingID or ParticipantID: no matching record found.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         IF @Attendance IS NOT NULL
+--         BEGIN
+--             UPDATE StationaryMeetingDetails
+--             SET Attendance = @Attendance
+--             WHERE MeetingID = @MeetingID AND ParticipantID = @ParticipantID;
+--         END;
+
+--         COMMIT TRANSACTION;
+--     END TRY
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+
+--         THROW;
+--     END CATCH;
+-- END;
+-- CREATE OR ALTER PROCEDURE p_EditStudiesService
+-- (
+--     @ServiceID INT,
+--     @EntryFee MONEY
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+    
+--         IF NOT EXISTS (SELECT 1 FROM StudiesService WHERE ServiceID = @ServiceID)
+--         BEGIN
+--             RAISERROR('Invalid ServiceID: no matching service found in StudiesService.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+  
+--         IF @EntryFee <= 0
+--         BEGIN
+--             RAISERROR('EntryFee must be greater than 0.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+  
+--         UPDATE StudiesService
+--         SET EntryFee = @EntryFee
+--         WHERE ServiceID = @ServiceID;
+
+--         COMMIT TRANSACTION;
+--     END TRY
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+
+--         THROW;
+--     END CATCH;
+-- END;
+-- CREATE OR ALTER PROCEDURE p_EditWebinarService
+-- (
+--     @ServiceID INT,
+--     @Price MONEY
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+      
+--         IF NOT EXISTS (SELECT 1 FROM WebinarService WHERE ServiceID = @ServiceID)
+--         BEGIN
+--             RAISERROR('Invalid ServiceID: no matching service found in WebinarService.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+      
+--         IF @Price <= 0
+--         BEGIN
+--             RAISERROR('Price must be greater than 0.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+   
+--         UPDATE WebinarService
+--         SET Price = @Price
+--         WHERE ServiceID = @ServiceID;
+
+--         COMMIT TRANSACTION;
+--     END TRY
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+
+--         THROW;
+--     END CATCH;
+-- END;
+
+-- CREATE OR ALTER PROCEDURE p_DeleteClassMeetingService
+-- (
+--     @ServiceID INT
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+      
+--         IF NOT EXISTS (SELECT 1 FROM ClassMeetingService WHERE ServiceID = @ServiceID)
+--         BEGIN
+--             RAISERROR('Invalid ServiceID: no matching service found in ClassMeetingService.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+ 
+--         DELETE FROM ClassMeetingService WHERE ServiceID = @ServiceID;
+
+--         COMMIT TRANSACTION;
+--     END TRY
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+
+--         THROW;
+--     END CATCH;
+-- END;
+-- CREATE OR ALTER PROCEDURE p_DeleteConventionService
+-- (
+--     @ServiceID INT
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+    
+--         IF NOT EXISTS (SELECT 1 FROM ConventionService WHERE ServiceID = @ServiceID)
+--         BEGIN
+--             RAISERROR('Invalid ServiceID: no matching service found in ConventionService.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+     
+--         DELETE FROM ConventionService WHERE ServiceID = @ServiceID;
+
+--         COMMIT TRANSACTION;
+--     END TRY
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+
+--         THROW;
+--     END CATCH;
+-- END;
+-- CREATE OR ALTER PROCEDURE p_DeleteCourse
+-- (
+--     @CourseID INT
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+   
+--         IF NOT EXISTS (SELECT 1 FROM Courses WHERE CourseID = @CourseID)
+--         BEGIN
+--             RAISERROR('Invalid CourseID: no matching course found.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+-- 		DECLARE @ModuleID INT;
+-- 		DECLARE ModulesCursor CURSOR FOR
+-- 		SELECT ModuleID
+-- 		FROM Modules
+-- 		WHERE CourseID = @CourseID;
+
+-- 		OPEN ModulesCursor;
+-- 		FETCH NEXT FROM ModulesCursor INTO @ModuleID;
+-- 		WHILE @@FETCH_STATUS = 0
+-- 		BEGIN
+-- 			EXEC p_DeleteModule @ModuleID;
+-- 			FETCH NEXT FROM ModulesCursor INTO @ModuleID;
+-- 		END;
+
+-- 		CLOSE ModulesCursor;
+-- 		DEALLOCATE ModulesCursor;
+
+
+     
+--         DELETE FROM Modules
+--         WHERE CourseID = @CourseID;
+
+  
+--         DELETE FROM Courses
+--         WHERE CourseID = @CourseID;
+
+--         COMMIT TRANSACTION;
+--     END TRY
+
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+
+--         THROW;
+--     END CATCH;
+-- END;
+-- GO
+-- CREATE OR ALTER PROCEDURE p_DeleteCourseParticipant
+-- (
+--     @ParticipantID INT,
+--     @CourseID INT
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+     
+--         IF NOT EXISTS (SELECT 1 FROM CourseParticipants WHERE ParticipantID = @ParticipantID AND CourseID = @CourseID)
+--         BEGIN
+--             RAISERROR('Invalid ParticipantID or CourseID: no matching course participant found.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+
+--         DELETE FROM CourseParticipants
+--         WHERE ParticipantID = @ParticipantID AND CourseID = @CourseID;
+
+--         COMMIT TRANSACTION;
+--     END TRY
+
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+
+--         THROW;
+--     END CATCH;
+-- END;
+-- GO
+-- CREATE OR ALTER PROCEDURE p_DeleteCourseService
+-- (
+--     @ServiceID INT
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+       
+--         IF NOT EXISTS (SELECT 1 FROM CourseService WHERE ServiceID = @ServiceID)
+--         BEGIN
+--             RAISERROR('Invalid ServiceID: no matching service found in CourseService.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+ 
+--         DELETE FROM CourseService WHERE ServiceID = @ServiceID;
+
+--         COMMIT TRANSACTION;
+--     END TRY
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+
+--         THROW;
+--     END CATCH;
+-- END;
+-- CREATE OR ALTER PROCEDURE p_DeleteModule
+-- (
+--     @ModuleID INT
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+
+--         IF NOT EXISTS (SELECT 1 FROM Modules WHERE ModuleID = @ModuleID)
+--         BEGIN
+--             RAISERROR('Invalid ModuleID: no matching module found.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+
+-- 		DECLARE @MeetingID INT;
+-- 		DECLARE MeetingsCursor CURSOR FOR
+		
+-- 		SELECT MeetingID 
+-- 		FROM StationaryMeeting
+-- 		WHERE ModuleID = @ModuleID
+
+-- 		OPEN MeetingsCursor;
+-- 		FETCH NEXT FROM MeetingsCursor INTO @MeetingID
+
+--         WHILE @@FETCH_STATUS = 0
+-- 			BEGIN
+-- 				EXEC p_DeleteStationaryMeeting @MeetingID;
+-- 				FETCH NEXT FROM MeetingsCursor INTO @MeetingID;
+-- 			END;
+-- 		CLOSE MeetingsCursor;
+-- 		DEALLOCATE MeetingsCursor;
+
+
+
+
+-- 		DECLARE @MeetingID1 INT;
+-- 		DECLARE MeetingsCursor CURSOR FOR
+
+-- 		SELECT MeetingID 
+-- 		FROM OfflineVideo
+-- 		WHERE ModuleID = @ModuleID
+
+-- 		OPEN MeetingsCursor;
+-- 		FETCH NEXT FROM MeetingsCursor INTO @MeetingID1
+
+--         WHILE @@FETCH_STATUS = 0
+-- 			BEGIN
+-- 				EXEC p_DeleteOfflineVideo @MeetingID1;
+-- 				FETCH NEXT FROM MeetingsCursor INTO @MeetingID1;
+-- 			END;
+-- 		CLOSE MeetingsCursor;
+-- 		DEALLOCATE MeetingsCursor;
+
+
+
+-- 		DECLARE @MeetingID2 INT;
+-- 		DECLARE MeetingsCursor CURSOR FOR
+
+
+-- 		SELECT MeetingID 
+-- 		FROM OnlineLiveMeeting
+-- 		WHERE ModuleID = @ModuleID
+
+-- 		OPEN MeetingsCursor;
+-- 		FETCH NEXT FROM MeetingsCursor INTO @MeetingID2
+
+--         WHILE @@FETCH_STATUS = 0
+-- 			BEGIN
+-- 				EXEC p_DeleteOnlineLiveMeeting @MeetingID2;
+-- 				FETCH NEXT FROM MeetingsCursor INTO @MeetingID2;
+-- 			END;
+-- 		CLOSE MeetingsCursor;
+-- 		DEALLOCATE MeetingsCursor;
+
+
+--         DELETE FROM Modules
+--         WHERE ModuleID = @ModuleID;
+
+--         COMMIT TRANSACTION;
+--     END TRY
+
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+
+--         THROW;
+--     END CATCH;
+-- END;
+-- GO
+
+-- exec delete
+-- CREATE OR ALTER PROCEDURE p_DeleteOfflineVideo
+-- (
+--     @MeetingID INT
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+
+--         IF NOT EXISTS (SELECT 1 FROM OfflineVideo WHERE MeetingID = @MeetingID)
+--         BEGIN
+--             RAISERROR('Invalid MeetingID: no matching offline video found.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+
+--         DELETE FROM OfflineVideoDetails
+--         WHERE MeetingID = @MeetingID;
+
+--         DELETE FROM OfflineVideo
+--         WHERE MeetingID = @MeetingID;
+
+--         COMMIT TRANSACTION;
+--     END TRY
+
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+
+--         THROW;
+--     END CATCH;
+-- END;
+-- GO
+-- CREATE OR ALTER PROCEDURE p_DeleteOfflineVideoDetails
+-- (
+--     @MeetingID INT,
+--     @ParticipantID INT
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+     
+--         IF NOT EXISTS (SELECT 1 FROM OfflineVideoDetails WHERE MeetingID = @MeetingID AND ParticipantID = @ParticipantID)
+--         BEGIN
+--             RAISERROR('Invalid MeetingID or ParticipantID: no matching offline video details found.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+      
+--         DELETE FROM OfflineVideoDetails
+--         WHERE MeetingID = @MeetingID AND ParticipantID = @ParticipantID;
+
+--         COMMIT TRANSACTION;
+--     END TRY
+
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+
+--         THROW;
+--     END CATCH;
+-- END;
+-- GO
+-- CREATE OR ALTER PROCEDURE p_DeleteOnlineLiveMeeting
+-- (
+--     @MeetingID INT
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+  
+--         IF NOT EXISTS (SELECT 1 FROM OnlineLiveMeeting WHERE MeetingID = @MeetingID)
+--         BEGIN
+--             RAISERROR('Invalid MeetingID: no matching online live meeting found.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         DELETE FROM OnlineLiveMeetingDetails
+--         WHERE MeetingID = @MeetingID;
+
+       
+--         DELETE FROM OnlineLiveMeeting
+--         WHERE MeetingID = @MeetingID;
+
+--         COMMIT TRANSACTION;
+--     END TRY
+
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+
+--         THROW;
+--     END CATCH;
+-- END;
+-- GO
+-- CREATE OR ALTER PROCEDURE p_DeleteOnlineLiveMeetingDetails
+-- (
+--     @MeetingID INT,
+--     @ParticipantID INT
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+   
+--         IF NOT EXISTS (SELECT 1 FROM OnlineLiveMeetingDetails WHERE MeetingID = @MeetingID AND ParticipantID = @ParticipantID)
+--         BEGIN
+--             RAISERROR('Invalid MeetingID or ParticipantID: no matching online live meeting details found.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+    
+--         DELETE FROM OnlineLiveMeetingDetails
+--         WHERE MeetingID = @MeetingID AND ParticipantID = @ParticipantID;
+
+--         COMMIT TRANSACTION;
+--     END TRY
+
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+
+--         THROW;
+--     END CATCH;
+-- END;
+-- GO
+-- CREATE OR ALTER PROCEDURE p_DeleteOrder
+-- (
+--     @OrderID INT
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+      
+--         IF NOT EXISTS (SELECT 1 FROM Orders WHERE OrderID = @OrderID)
+--         BEGIN
+--             RAISERROR('Invalid OrderID: no matching order found.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+		
+	
+-- 		DECLARE @ServiceID INT;
+-- 		DECLARE OrdersDetailsCursor CURSOR FOR
+-- 		SELECT ServiceID 
+-- 		FROM OrderDetails 
+-- 		WHERE OrderID = @OrderID;
+
+-- 		OPEN OrdersDetailsCursor;
+-- 		FETCH NEXT FROM OrdersDetailsCursor INTO @ServiceID;
+-- 		WHILE @@FETCH_STATUS = 0
+-- 		BEGIN
+			
+-- 			EXEC p_DeleteOrderDetails @ServiceID, @OrderID;
+-- 			FETCH NEXT FROM OrdersDetailsCursor INTO @ServiceID;
+-- 		END;
+-- 		CLOSE OrdersDetailsCursor;
+-- 		DEALLOCATE OrdersDetailsCursor;
+
+	
+-- 		DELETE FROM Orders WHERE OrderID = @OrderID;
+
+--         COMMIT TRANSACTION;
+--     END TRY
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+
+--         THROW;
+--     END CATCH;
+-- END;
+-- CREATE OR ALTER PROCEDURE p_DeleteOrderDetails
+-- (
+--     @ServiceID INT,
+--     @OrderID INT
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+   
+--         IF NOT EXISTS (SELECT 1 FROM OrderDetails WHERE ServiceID = @ServiceID AND OrderID = @OrderID)
+--         BEGIN
+--             RAISERROR('Invalid ServiceID or OrderID: no matching order details found.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+-- 		DELETE FROM Payments WHERE ServiceID = @ServiceID AND OrderID = @OrderID
+
+
+      
+--         DELETE FROM OrderDetails WHERE ServiceID = @ServiceID AND OrderID = @OrderID;
+
+--         COMMIT TRANSACTION;
+--     END TRY
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+
+--         THROW;
+--     END CATCH;
+-- END;
+-- CREATE OR ALTER PROCEDURE p_DeletePayment
+-- (
+--     @PaymentID INT
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+      
+--         IF NOT EXISTS (SELECT 1 FROM Payments WHERE PaymentID = @PaymentID)
+--         BEGIN
+--             RAISERROR('Invalid PaymentID: no matching payment found.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+        
+--         DELETE FROM Payments WHERE PaymentID = @PaymentID;
+
+--         COMMIT TRANSACTION;
+--     END TRY
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+
+--         THROW;
+--     END CATCH;
+-- END;
+-- CREATE OR ALTER PROCEDURE p_DeleteService
+-- (
+--     @ServiceID INT
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+        
+--         IF NOT EXISTS (SELECT 1 FROM Services WHERE ServiceID = @ServiceID)
+--         BEGIN
+--             RAISERROR('Invalid ServiceID: no matching service found.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+		
+-- 		DECLARE @ServiceType VARCHAR(30);
+
+		
+-- 		SELECT @ServiceType = ServiceType
+-- 		FROM Services
+-- 		WHERE ServiceID = @ServiceID;
+
+		
+-- 		IF @ServiceType = 'CourseService'
+-- 		BEGIN
+-- 			EXEC p_DeleteCourseService @ServiceID;
+-- 		END
+-- 		ELSE IF @ServiceType = 'ClassMeetingService'
+-- 		BEGIN
+-- 			EXEC p_DeleteClassMeetingService @ServiceID;
+-- 		END
+-- 		ELSE IF @ServiceType = 'StudiesService'
+-- 		BEGIN
+-- 			EXEC p_DeleteStudiesService @ServiceID;
+-- 		END
+-- 		ELSE IF @ServiceType = 'WebinarService'
+-- 		BEGIN
+-- 			EXEC p_DeleteWebinarService @ServiceID;
+-- 		END
+-- 		ELSE IF @ServiceType = 'ConventionService'
+-- 		BEGIN
+-- 			EXEC p_DeleteConventionService @ServiceID;
+-- 		END
+
+-- 		DECLARE @OrderID INT;
+-- 		DECLARE OrdersCursor CURSOR FOR
+-- 		SELECT OrderID 
+-- 		FROM OrderDetails 
+-- 		WHERE ServiceID = @ServiceID;
+
+-- 		OPEN OrdersCursor;
+-- 		FETCH NEXT FROM OrdersCursor INTO @OrderID;
+-- 		WHILE @@FETCH_STATUS = 0
+-- 		BEGIN
+-- 			EXEC p_DeleteOrderDetails @ServiceID, @OrderID
+-- 			FETCH NEXT FROM OrdersCursor INTO @OrderID;
+-- 		END;
+-- 		CLOSE OrdersCursor;
+-- 		DEALLOCATE OrdersCursor;
+-- 		DELETE FROM Services WHERE ServiceID = @ServiceID;
+
+-- 		COMMIT TRANSACTION;
+-- 	END TRY
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+
+--         THROW;
+--     END CATCH;
+-- END;
+-- CREATE OR ALTER PROCEDURE p_DeleteStationaryMeeting
+-- (
+--     @MeetingID INT
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+--         IF NOT EXISTS (SELECT 1 FROM StationaryMeeting WHERE MeetingID = @MeetingID)
+--         BEGIN
+--             RAISERROR('Invalid MeetingID: no matching stationary meeting found.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         DELETE FROM StationaryMeetingDetails
+--         WHERE MeetingID = @MeetingID;
+
+--         DELETE FROM StationaryMeeting
+--         WHERE MeetingID = @MeetingID;
+		
+		
+--         COMMIT TRANSACTION;
+--     END TRY
+
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+
+--         THROW;
+--     END CATCH;
+-- END;
+-- GO
+-- CREATE OR ALTER PROCEDURE p_DeleteStationaryMeetingDetails
+-- (
+--     @MeetingID INT,
+--     @ParticipantID INT
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+--         IF NOT EXISTS (SELECT 1 FROM StationaryMeetingDetails WHERE MeetingID = @MeetingID AND ParticipantID = @ParticipantID)
+--         BEGIN
+--             RAISERROR('Invalid MeetingID or ParticipantID: no matching details found.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         DELETE FROM StationaryMeetingDetails
+--         WHERE MeetingID = @MeetingID AND ParticipantID = @ParticipantID;
+
+--         COMMIT TRANSACTION;
+--     END TRY
+
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+
+--         THROW;
+--     END CATCH;
+-- END;
+-- GO
+-- CREATE OR ALTER PROCEDURE p_DeleteStudiesService
+-- (
+--     @ServiceID INT
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+--         IF NOT EXISTS (SELECT 1 FROM StudiesService WHERE ServiceID = @ServiceID)
+--         BEGIN
+--             RAISERROR('Invalid ServiceID: no matching service found in StudiesService.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         DELETE FROM StudiesService WHERE ServiceID = @ServiceID;
+
+--         COMMIT TRANSACTION;
+--     END TRY
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+
+--         THROW;
+--     END CATCH;
+-- END;
+-- CREATE OR ALTER PROCEDURE p_DeleteWebinarService
+-- (
+--     @ServiceID INT
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+--         IF NOT EXISTS (SELECT 1 FROM WebinarService WHERE ServiceID = @ServiceID)
+--         BEGIN
+--             RAISERROR('Invalid ServiceID: no matching service found in WebinarService.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         DELETE FROM WebinarService WHERE ServiceID = @ServiceID;
+
+--         COMMIT TRANSACTION;
+--     END TRY
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+
+--         THROW;
+--     END CATCH;
+-- END;
+
+-- CREATE OR ALTER PROCEDURE p_AddClassMeetingService
+-- (
+--     @ServiceID INT,
+--     @PriceStudents MONEY,
+--     @PriceOthers MONEY = NULL
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+--         IF NOT EXISTS (SELECT 1 FROM Services WHERE ServiceID = @ServiceID)
+--         BEGIN
+--             RAISERROR('Invalid ServiceID: no matching service found.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         IF @PriceStudents <= 0
+--         BEGIN
+--             RAISERROR('PriceStudents must be greater than zero.', 16, 2);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         INSERT INTO ClassMeetingService (ServiceID, PriceStudents, PriceOthers)
+--         VALUES (@ServiceID, @PriceStudents, @PriceOthers);
+
+--         COMMIT TRANSACTION;
+--     END TRY
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+
+--         THROW;
+--     END CATCH;
+-- END;
+-- CREATE OR ALTER PROCEDURE p_AddConventionService
+-- (
+--     @ServiceID INT,
+--     @Price MONEY
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+--         IF NOT EXISTS (SELECT 1 FROM Services WHERE ServiceID = @ServiceID)
+--         BEGIN
+--             RAISERROR('Invalid ServiceID: no matching service found.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+
+--         IF @Price <= 0
+--         BEGIN
+--             RAISERROR('Price must be greater than zero.', 16, 2);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+
+--         INSERT INTO ConventionService (ServiceID, Price)
+--         VALUES (@ServiceID, @Price);
+
+--         COMMIT TRANSACTION;
+--     END TRY
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+
+--         THROW;
+--     END CATCH;
+-- END;
+-- CREATE OR ALTER PROCEDURE p_AddCourseParticipant
+-- (
+--     @ParticipantID INT,
+--     @CourseID      INT
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+--         IF NOT EXISTS (SELECT 1 FROM ServiceUserDetails WHERE ServiceUserID = @ParticipantID)
+--         BEGIN
+--             RAISERROR('Invalid ParticipantID: no matching participant found in ServiceUserDetails.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         IF NOT EXISTS (SELECT 1 FROM Courses WHERE CourseID = @CourseID)
+--         BEGIN
+--             RAISERROR('Invalid CourseID: no matching course found.', 16, 2);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         IF EXISTS (SELECT 1 FROM CourseParticipants WHERE ParticipantID = @ParticipantID AND CourseID = @CourseID)
+--         BEGIN
+--             RAISERROR('The participant is already enrolled in this course.', 16, 3);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         INSERT INTO CourseParticipants
+--             (ParticipantID, CourseID)
+--         VALUES
+--             (@ParticipantID, @CourseID);
+
+--         COMMIT TRANSACTION;
+--     END TRY
+
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+--         THROW;
+--     END CATCH;
+-- END;
+-- GO
+-- CREATE OR ALTER PROCEDURE p_AddCourseService
+-- (
+--     @ServiceID INT,
+--     @AdvanceValue MONEY,
+--     @FullPrice MONEY
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+--         IF NOT EXISTS (SELECT 1 FROM Services WHERE ServiceID = @ServiceID)
+--         BEGIN
+--             RAISERROR('Invalid ServiceID: no matching service found.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         IF @AdvanceValue <= 0
+--         BEGIN
+--             RAISERROR('AdvanceValue must be greater than zero.', 16, 2);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         IF @FullPrice < @AdvanceValue
+--         BEGIN
+--             RAISERROR('FullPrice must be greater than or equal to AdvanceValue.', 16, 3);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         INSERT INTO CourseService (ServiceID, AdvanceValue, FullPrice)
+--         VALUES (@ServiceID, @AdvanceValue, @FullPrice);
+
+--         COMMIT TRANSACTION;
+--     END TRY
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+
+--         THROW;
+--     END CATCH;
+-- END;
+-- CREATE OR ALTER PROCEDURE p_AddOfflineVideoDetails
+-- (
+--     @MeetingID     INT,
+--     @ParticipantID INT,
+--     @DateOfViewing DATE = NULL
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+--         IF NOT EXISTS (SELECT 1 FROM OfflineVideo WHERE MeetingID = @MeetingID)
+--         BEGIN
+--             RAISERROR('Invalid MeetingID: no matching offline video found.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         IF NOT EXISTS (SELECT 1 FROM ServiceUserDetails WHERE ServiceUserID = @ParticipantID)
+--         BEGIN
+--             RAISERROR('Invalid ParticipantID: no matching participant found.', 16, 2);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         IF EXISTS (SELECT 1 FROM OfflineVideoDetails WHERE MeetingID = @MeetingID AND ParticipantID = @ParticipantID)
+--         BEGIN
+--             RAISERROR('The participant is already added to this offline video.', 16, 3);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         INSERT INTO OfflineVideoDetails
+--             (MeetingID, ParticipantID, DateOfViewing)
+--         VALUES
+--             (@MeetingID, @ParticipantID, @DateOfViewing);
+
+--         COMMIT TRANSACTION;
+--     END TRY
+
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+--         THROW;
+--     END CATCH;
+-- END;
+-- GO
+-- CREATE OR ALTER PROCEDURE p_AddOnlineLiveMeetingDetails
+-- (
+--     @MeetingID     INT,
+--     @ParticipantID INT,
+--     @Attendance    BIT = NULL
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+--         IF NOT EXISTS (SELECT 1 FROM OnlineLiveMeeting WHERE MeetingID = @MeetingID)
+--         BEGIN
+--             RAISERROR('Invalid MeetingID: no matching online live meeting found.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         IF NOT EXISTS (SELECT 1 FROM ServiceUserDetails WHERE ServiceUserID = @ParticipantID)
+--         BEGIN
+--             RAISERROR('Invalid ParticipantID: no matching participant found.', 16, 2);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         IF EXISTS (SELECT 1 FROM OnlineLiveMeetingDetails WHERE MeetingID = @MeetingID AND ParticipantID = @ParticipantID)
+--         BEGIN
+--             RAISERROR('The participant is already added to this online live meeting.', 16, 3);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         INSERT INTO OnlineLiveMeetingDetails
+--             (MeetingID, ParticipantID, Attendance)
+--         VALUES
+--             (@MeetingID, @ParticipantID, @Attendance);
+
+--         COMMIT TRANSACTION;
+--     END TRY
+
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+--         THROW;
+--     END CATCH;
+-- END;
+-- GO
+-- CREATE OR ALTER PROCEDURE p_AddOrder
+-- (
+--     @OrderID INT,
+--     @UserID INT,
+--     @OrderDate DATETIME = NULL,
+--     @PaymentLink VARCHAR(60) = NULL
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+  
+--         IF NOT EXISTS (SELECT 1 FROM ServiceUserDetails WHERE ServiceUserID = @UserID)
+--         BEGIN
+--             RAISERROR('Invalid UserID: no matching user found.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         IF @OrderDate > GETDATE()
+--         BEGIN
+--             RAISERROR('OrderDate cannot be in the future.', 16, 2);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         INSERT INTO Orders (OrderID, UserID, OrderDate, PaymentLink)
+--         VALUES (@OrderID, @UserID, @OrderDate, @PaymentLink);
+
+--         COMMIT TRANSACTION;
+--     END TRY
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+
+--         THROW;
+--     END CATCH;
+-- END;
+-- CREATE OR ALTER PROCEDURE p_AddOrderDetail
+-- (
+--     @OrderID INT,
+--     @ServiceID INT
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+--         IF NOT EXISTS (SELECT 1 FROM Orders WHERE OrderID = @OrderID)
+--         BEGIN
+--             RAISERROR('Invalid OrderID: no matching order found.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         IF NOT EXISTS (SELECT 1 FROM Services WHERE ServiceID = @ServiceID)
+--         BEGIN
+--             RAISERROR('Invalid ServiceID: no matching service found.', 16, 2);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         IF EXISTS (SELECT 1 FROM OrderDetails WHERE OrderID = @OrderID AND ServiceID = @ServiceID)
+--         BEGIN
+--             RAISERROR('This combination of OrderID and ServiceID already exists in OrderDetails.', 16, 3);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         INSERT INTO OrderDetails (OrderID, ServiceID)
+--         VALUES (@OrderID, @ServiceID);
+
+--         COMMIT TRANSACTION;
+--     END TRY
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+
+--         THROW;
+--     END CATCH;
+-- END;
+-- CREATE OR ALTER PROCEDURE p_AddPayment
+-- (
+--     @PaymentID INT,
+--     @PaymentValue MONEY,
+--     @PaymentDate DATETIME = NULL,
+--     @ServiceID INT,
+--     @OrderID INT
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+-- 		IF NOT EXISTS (SELECT 1 FROM OrderDetails WHERE OrderID = @OrderID AND ServiceID = @ServiceID)
+--         BEGIN
+--             RAISERROR('No matching pair (OrderID, ServiceID) in OrderDetails', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+
+--         IF @PaymentValue <= 0
+--         BEGIN
+--             RAISERROR('PaymentValue must be greater than zero.', 16, 3);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         INSERT INTO Payments (PaymentID, PaymentValue, PaymentDate, ServiceID, OrderID)
+--         VALUES (@PaymentID, @PaymentValue, @PaymentDate, @ServiceID, @OrderID);
+
+--         COMMIT TRANSACTION;
+--     END TRY
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+
+--         THROW;
+--     END CATCH;
+-- END;
+-- CREATE OR ALTER PROCEDURE p_AddService
+-- (
+--     @ServiceID INT,
+--     @ServiceType VARCHAR(30)
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+--         IF @ServiceType NOT IN ('ClassMeetingService', 'StudiesService', 'CourseService', 'WebinarService', 'ConventionService')
+--         BEGIN
+--             RAISERROR('Invalid ServiceType: must be one of the allowed types.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         INSERT INTO Services (ServiceID, ServiceType)
+--         VALUES (@ServiceID, @ServiceType);
+
+--         COMMIT TRANSACTION;
+--     END TRY
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+
+--         THROW;
+--     END CATCH;
+-- END;
+
+-- CREATE OR ALTER PROCEDURE p_AddStationaryMeetingDetails
+-- (
+--     @MeetingID     INT,
+--     @ParticipantID INT,
+--     @Attendance    BIT = NULL
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+--         IF NOT EXISTS (SELECT 1 FROM StationaryMeeting WHERE MeetingID = @MeetingID)
+--         BEGIN
+--             RAISERROR('Invalid MeetingID: no matching stationary meeting found.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         IF NOT EXISTS (SELECT 1 FROM ServiceUserDetails WHERE ServiceUserID = @ParticipantID)
+--         BEGIN
+--             RAISERROR('Invalid ParticipantID: no matching participant found.', 16, 2);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         IF EXISTS (SELECT 1 FROM StationaryMeetingDetails WHERE MeetingID = @MeetingID AND ParticipantID = @ParticipantID)
+--         BEGIN
+--             RAISERROR('The participant is already added to this stationary meeting.', 16, 3);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         INSERT INTO StationaryMeetingDetails
+--             (MeetingID, ParticipantID, Attendance)
+--         VALUES
+--             (@MeetingID, @ParticipantID, @Attendance);
+
+--         COMMIT TRANSACTION;
+--     END TRY
+
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+--         THROW;
+--     END CATCH;
+-- END;
+-- GO
+-- CREATE OR ALTER PROCEDURE p_AddStudiesService
+-- (
+--     @ServiceID INT,
+--     @EntryFee MONEY
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+--         IF NOT EXISTS (SELECT 1 FROM Services WHERE ServiceID = @ServiceID)
+--         BEGIN
+--             RAISERROR('Invalid ServiceID: no matching service found.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         IF @EntryFee <= 0
+--         BEGIN
+--             RAISERROR('EntryFee must be greater than zero.', 16, 2);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         INSERT INTO StudiesService (ServiceID, EntryFee)
+--         VALUES (@ServiceID, @EntryFee);
+
+--         COMMIT TRANSACTION;
+--     END TRY
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+
+--         THROW;
+--     END CATCH;
+-- END;
+-- CREATE OR ALTER PROCEDURE p_AddWebinarService
+-- (
+--     @ServiceID INT,
+--     @Price MONEY
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+--         IF NOT EXISTS (SELECT 1 FROM Services WHERE ServiceID = @ServiceID)
+--         BEGIN
+--             RAISERROR('Invalid ServiceID: no matching service found.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         IF @Price <= 0
+--         BEGIN
+--             RAISERROR('Price must be greater than zero.', 16, 2);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         INSERT INTO WebinarService (ServiceID, Price)
+--         VALUES (@ServiceID, @Price);
+
+--         COMMIT TRANSACTION;
+--     END TRY
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+
+--         THROW;
+--     END CATCH;
+-- END;
