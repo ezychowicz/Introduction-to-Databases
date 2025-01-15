@@ -6138,3 +6138,146 @@
 --        THROW;
 --    END CATCH;
 --END;
+
+--CREATE OR ALTER FUNCTION f_CalculateAverageUserAge()
+--RETURNS FLOAT
+--AS
+--BEGIN
+--    DECLARE @AverageAge FLOAT;
+
+--    SET @AverageAge = (
+--        SELECT AVG(DATEDIFF(YEAR, DateOfBirth, GETDATE()))
+--        FROM Users
+--        WHERE DateOfBirth IS NOT NULL
+--    );
+
+--    RETURN @AverageAge;
+--END;
+--SELECT dbo.f_CalculateAverageUserAge() AS AverageUserAge;
+
+
+--CREATE OR ALTER FUNCTION f_CountEmployeesUnderSupervisor
+--(
+--    @SupervisorID INT
+--)
+--RETURNS INT
+--AS
+--BEGIN
+--    DECLARE @EmployeeCount INT;
+
+--    SET @EmployeeCount = (
+--        SELECT COUNT(*)
+--        FROM EmployeesSuperior
+--        WHERE ReportsTo = @SupervisorID
+--    );
+
+--    RETURN @EmployeeCount;
+--END;
+--SELECT dbo.f_CountEmployeesUnderSupervisor(5) AS EmployeeCount;
+
+
+--CREATE OR ALTER FUNCTION f_HasUserAddress
+--(
+--    @UserID INT
+--)
+--RETURNS BIT
+--AS
+--BEGIN
+--    DECLARE @HasAddress BIT;
+
+--    SET @HasAddress = CASE
+--        WHEN EXISTS (
+--            SELECT 1
+--            FROM UserAddressDetails
+--            WHERE UserID = @UserID
+--        ) THEN 1
+--        ELSE 0
+--    END;
+
+--    RETURN @HasAddress;
+--END;
+--SELECT dbo.f_HasUserAddress(3) AS HasAddress;
+
+
+--CREATE OR ALTER FUNCTION f_CountTranslatorLanguages
+--(
+--    @TranslatorID INT
+--)
+--RETURNS INT
+--AS
+--BEGIN
+--    DECLARE @LanguageCount INT;
+
+--    SET @LanguageCount = (
+--        SELECT COUNT(*)
+--        FROM TranslatorsLanguages
+--        WHERE TranslatorID = @TranslatorID
+--    );
+
+--    RETURN @LanguageCount;
+--END;
+--SELECT dbo.f_CountTranslatorLanguages(2) AS LanguageCount;
+
+--CREATE OR ALTER FUNCTION f_CountWebinarParticipants
+--(
+--    @WebinarID INT
+--)
+--RETURNS INT
+--AS
+--BEGIN
+--    DECLARE @ParticipantCount INT;
+
+--    SET @ParticipantCount = (
+--        SELECT COUNT(*)
+--        FROM WebinarDetails
+--        WHERE WebinarID = @WebinarID
+--    );
+
+--    RETURN @ParticipantCount;
+--END;
+--SELECT dbo.f_CountWebinarParticipants(1) AS ParticipantCount;
+
+--CREATE OR ALTER FUNCTION f_IsUserRegisteredForWebinar
+--(
+--    @UserID INT,
+--    @WebinarID INT
+--)
+--RETURNS BIT
+--AS
+--BEGIN
+--    DECLARE @IsRegistered BIT;
+
+--    SET @IsRegistered = CASE
+--        WHEN EXISTS (
+--            SELECT 1
+--            FROM WebinarDetails
+--            WHERE UserID = @UserID AND WebinarID = @WebinarID
+--        ) THEN 1
+--        ELSE 0
+--    END;
+
+--    RETURN @IsRegistered;
+--END;
+--SELECT dbo.f_IsUserRegisteredForWebinar(3, 1) AS IsRegistered;
+
+--CREATE OR ALTER FUNCTION f_IsUserEmployee
+--(
+--    @UserID INT
+--)
+--RETURNS BIT
+--AS
+--BEGIN
+--    DECLARE @IsEmployee BIT;
+
+--    SET @IsEmployee = CASE
+--        WHEN EXISTS (
+--            SELECT 1
+--            FROM Employees
+--            WHERE EmployeeID = @UserID
+--        ) THEN 1
+--        ELSE 0
+--    END;
+
+--    RETURN @IsEmployee;
+--END;
+--SELECT dbo.f_IsUserEmployee(3) AS IsEmployee;
