@@ -1355,7 +1355,7 @@ for wb in webinars_data:
 print("\n-- INSERT INTO WebinarDetails")
 for wd in webinardetails_data:
     print(f"INSERT INTO WebinarDetails (UserID, WebinarID, AvailableDue)"
-          f"VALUES ({wd['ParticipantID']}, {wd['WebinarID']}), '{wd['AvailableDue']}';")
+          f"VALUES ({wd['ParticipantID']}, {wd['WebinarID']}, '{wd['AvailableDue']}');")
 print("\n-- Done generating integrated mock data (Users, Employees, College, Payments).")
 
 # Rooms
