@@ -14,11 +14,11 @@ NUM_LOCATIONS          = 23
 NUM_LANGUAGES          = 5
 NUM_DEGREES            = 5
 
-NUM_USERS              = 1000   # total
+NUM_USERS              = 2000  # total
 NUM_USERCONTACT        = 75
 NUM_USERADDRESS        = 75
 NUM_EMPLOYEES          = 50   # subset of users
-NUM_STUDENTS           = 800   # subset of users
+NUM_STUDENTS           = 1850   # subset of users
 NUM_TRANSLATORS        = 5    # subset of employees
 MIN_EMPLOYEE_SUPERIORS = 0
 
@@ -41,10 +41,10 @@ MAX_CONVENTIONS_PER_SEMESTER    = 10
 
 # =============== PAYMENTS
 # NUM_SERVICES           = 12 
-NUM_ORDERS             = 150
+NUM_ORDERS             = 1000
 MIN_SERVICES_PER_ORDER = 1
 MAX_SERVICES_PER_ORDER = 3
-NUM_PAYMENTS           = 2000
+NUM_PAYMENTS           = 10000
 
 # ==============================================================================
 #                               HELPER FUNCTIONS
@@ -659,7 +659,7 @@ for i in range(1, NUM_COURSES + 1):
         'CourseCoordinatorID': coordinator['EmployeeID'] if coordinator else 'NULL',
         'ServiceID': None,
         'CourseDate': course_date,
-        'EnrollmentLimit': random.randint(10,50)
+        'EnrollmentLimit': random.randint(10,100)
     })
 
 # ==============================================================================
@@ -975,6 +975,7 @@ for odr in order_records:
 # Payments
 payment_records = []
 next_payment_id = 1
+
 if order_details_records:
     for _ in range(NUM_PAYMENTS):
         od = random.choice(order_details_records)
