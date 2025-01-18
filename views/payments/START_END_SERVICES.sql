@@ -10,3 +10,4 @@ select ServiceID, StartOfService, EndOfService
 union 
 select ServiceID, StartOfService, EndOfService 
 	from START_END_OF_CLASSMEETING
+

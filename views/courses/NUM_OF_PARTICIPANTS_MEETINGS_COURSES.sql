@@ -6,7 +6,7 @@ select smd.MeetingID, sm.MeetingDate, 'Stationary' as MeetingType, COUNT(smd.Par
 	group by smd.MeetingID, sm.MeetingDate
 	having sm.MeetingDate > CONVERT(DATE, GETDATE()) 
 union
-select omd.MeetingID, om.MeetingDate, 'Online' as MeetingType, COUNT(omd.ParticipantID) as [Number of participants]
+select omd.MeetingID, om.MeetingDate, 'Online' as MeetingType, COUNT(omd.ParticipantID) as [Number of Participants]
 	from OnlineLiveMeetingDetails as omd
 	INNER JOIN OnlineLiveMeeting as om
 	on om.MeetingID = omd.MeetingID
