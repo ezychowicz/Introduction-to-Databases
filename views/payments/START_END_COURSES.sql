@@ -12,4 +12,3 @@ select c.ServiceID, c.CourseDate as StartOfService, CAST(max(T1.MeetingDate) AS 
 	group by c.ServiceID, c.CourseDate
 	
 	
-
