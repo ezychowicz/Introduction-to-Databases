@@ -14,17 +14,17 @@ NUM_LOCATIONS          = 23
 NUM_LANGUAGES          = 5
 NUM_DEGREES            = 5
 
-NUM_USERS              = 500   # total
+NUM_USERS              = 1000   # total
 NUM_USERCONTACT        = 75
 NUM_USERADDRESS        = 75
 NUM_EMPLOYEES          = 50   # subset of users
-NUM_STUDENTS           = 450   # subset of users
+NUM_STUDENTS           = 800   # subset of users
 NUM_TRANSLATORS        = 5    # subset of employees
 MIN_EMPLOYEE_SUPERIORS = 0
 
 # =============== COLLEGE/ACADEMIC
 NUM_GRADES             = 6
-NUM_STUDIES            = 5
+NUM_STUDIES            = 15
 NUM_SUBJECTS           = 40
 MIN_SEMESTERS_PER_STUDY = 4
 MAX_SEMESTERS_PER_STUDY = 7
@@ -643,8 +643,8 @@ for subj in subject_records:
 # ==============================================================================
 # COURSES
 # ==============================================================================
-NUM_COURSES = 5
-NUM_MODULES = 30
+NUM_COURSES = 20
+NUM_MODULES = 100
 possible_coordinator_emps = [e for e in employee_records
                              if next(u for u in user_records if u['UserID']==e['EmployeeID'])['UserTypeID'] in [2,4]]
 courses_records = []
@@ -690,7 +690,7 @@ for i in range(1, NUM_MODULES + 1):
 # ==============================================================================
 # Meetings
 # ==============================================================================
-NUM_MEETINGS = 50
+NUM_MEETINGS = 5000
 meeting_types = ["stationary", "offline video", "online live"]
 stationary_meetings_records = []
 offline_video_records = []
@@ -816,7 +816,7 @@ for live_meeting in online_live_meetings_records:
 # ==============================================================================
 # 24) WEBINARS
 # ==============================================================================
-NUM_WEBINARS           = 6      # how many webinars
+NUM_WEBINARS           = 300      # how many webinars
 MAX_PARTICIPANTS_PER_WEBINAR = 20
 
 webinars_data = []
@@ -838,7 +838,7 @@ for i in range(1, NUM_WEBINARS + 1):
     link_video = faker.uri()
     descr   = faker.sentence(nb_words=8)
     langid  = random.choice([l['LanguageID'] for l in language_records])
-    avdue   = faker.date_between(start_date='today', end_date='+20d')
+
     webinars_data.append({
         'WebinarID': i,
         'TeacherID': teacher_id,
@@ -850,7 +850,7 @@ for i in range(1, NUM_WEBINARS + 1):
         'LinkToVideo': link_video,
         'WebinarDescription': descr,
         'LanguageID': langid,
-        'AvailableDue': avdue,
+        
         'ServiceID': 1
     })
     
@@ -863,9 +863,11 @@ for i in range(1, NUM_WEBINARS + 1):
     num_parts = random.randint(1, MAX_PARTICIPANTS_PER_WEBINAR)
     chosen = random.sample(student_user_ids, k=min(num_parts, len(student_user_ids)))
     for part_id in chosen:
+        avdue   = faker.date_between(start_date='today', end_date='+30d')
         webinardetails_data.append({
             'ParticipantID': part_id,
-            'WebinarID': i
+            'WebinarID': i,
+            'AvailableDue': avdue
         })
 # ==============================================================================
 # 25) PAYMENT SYSTEM (Services, Orders, OrderDetails, Payments, etc.)
@@ -966,7 +968,8 @@ for odr in order_records:
     for srv in chosen_srv:
         order_details_records.append({
             'OrderID': odr['OrderID'],
-            'ServiceID': srv['ServiceID']
+            'ServiceID': srv['ServiceID'],
+            'PrincipalAgreement': random.choice([0,0,0,0,0,0,0,0,0,1])
         })
 
 # Payments
@@ -1329,8 +1332,8 @@ for odr in order_records:
 
 print("\n-- INSERT INTO OrderDetails")
 for od in order_details_records:
-    print(f"INSERT INTO OrderDetails (OrderID, ServiceID) "
-          f"VALUES ({od['OrderID']}, {od['ServiceID']});")
+    print(f"INSERT INTO OrderDetails (OrderID, ServiceID, PrincipalAgreement) "
+          f"VALUES ({od['OrderID']}, {od['ServiceID']}, {od['PrincipalAgreement']});")
 
 print("\n-- INSERT INTO Payments")
 for p in payment_records:
@@ -1346,13 +1349,13 @@ for p in service_user_details_records:
 
 print("\n-- INSERT INTO Webinars")
 for wb in webinars_data:
-    print(f"INSERT INTO Webinars (WebinarID, TeacherID, TranslatorID, WebinarName, WebinarDate, Link, DurationTime, LinkToVideo, WebinarDescription, LanguageID, AvailableDue, ServiceID) "
-          f"VALUES ({wb['WebinarID']}, {wb['TeacherID']}, {wb['TranslatorID']}, '{quote_str(wb['WebinarName'])}', '{wb['WebinarDate'].strftime('%Y-%m-%d %H:%M:%S')}', '{quote_str(wb['Link'])}', '{wb['DurationTime']}', '{quote_str(wb['LinkToVideo'])}', '{quote_str(wb['WebinarDescription'])}', {wb['LanguageID']}, '{wb['AvailableDue']}', {wb['ServiceID']});")
+    print(f"INSERT INTO Webinars (WebinarID, TeacherID, TranslatorID, WebinarName, WebinarDate, Link, DurationTime, LinkToVideo, WebinarDescription, LanguageID, ServiceID) "
+          f"VALUES ({wb['WebinarID']}, {wb['TeacherID']}, {wb['TranslatorID']}, '{quote_str(wb['WebinarName'])}', '{wb['WebinarDate'].strftime('%Y-%m-%d %H:%M:%S')}', '{quote_str(wb['Link'])}', '{wb['DurationTime']}', '{quote_str(wb['LinkToVideo'])}', '{quote_str(wb['WebinarDescription'])}', {wb['LanguageID']}, {wb['ServiceID']});")
 
 print("\n-- INSERT INTO WebinarDetails")
 for wd in webinardetails_data:
-    print(f"INSERT INTO WebinarDetails (UserID, WebinarID) "
-          f"VALUES ({wd['ParticipantID']}, {wd['WebinarID']});")
+    print(f"INSERT INTO WebinarDetails (UserID, WebinarID, AvailableDue)"
+          f"VALUES ({wd['ParticipantID']}, {wd['WebinarID']}), '{wd['AvailableDue']}';")
 print("\n-- Done generating integrated mock data (Users, Employees, College, Payments).")
 
 # Rooms
