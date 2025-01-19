@@ -81,7 +81,7 @@ where CourseID = 21
 
 --struktura kursu:
 select * from COURSE_INFO
-where CourseID = 21
+where CourseName = 'Nowy kurs'
 
 
 
@@ -111,7 +111,7 @@ select * from Payments
 where OrderID = 1001
 
 --zgoda dyrektora
-exec p_UpdatePrincipalAgreement 1001, 2149, 1
+exec p_UpdatePrincipalAgreement 1001, 2146, 1
 
 select * from OrderDetails
 where OrderID = 1001
