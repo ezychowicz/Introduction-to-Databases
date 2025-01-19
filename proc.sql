@@ -203,153 +203,167 @@
 --         THROW;
 --     END CATCH;
 -- END;
--- CREATE OR ALTER PROCEDURE p_CreateStudies
--- (
---     @StudiesName         VARCHAR(200),
---     @StudiesDescription  VARCHAR(1000),
---     @CoordinatorID       INT,
---     @EnrollmentLimit     INT,
---     @EnrollmentDeadline  DATE,
---     @SemesterCount       INT
--- )
--- AS
--- BEGIN
---     SET NOCOUNT ON;
+CREATE OR ALTER PROCEDURE p_CreateStudies
+(
+    @StudiesName         VARCHAR(200),
+    @StudiesDescription  VARCHAR(1000),
+    @CoordinatorID       INT,
+    @EnrollmentLimit     INT,
+    @EnrollmentDeadline  DATE,
+    @SemesterCount       INT
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
 
---     BEGIN TRY
---         BEGIN TRANSACTION;
+    BEGIN TRY
+        BEGIN TRANSACTION;
 
---         IF NOT EXISTS (SELECT 1 FROM Employees WHERE EmployeeID = @CoordinatorID)
---         BEGIN
---             RAISERROR('Invalid CoordinatorID: no matching Employee found.', 16, 1);
---             ROLLBACK TRANSACTION;
---             RETURN;
---         END;
+        IF NOT EXISTS (SELECT 1 FROM Employees WHERE EmployeeID = @CoordinatorID)
+        BEGIN
+            RAISERROR('Invalid CoordinatorID: no matching Employee found.', 16, 1);
+            ROLLBACK TRANSACTION;
+            RETURN;
+        END;
 
---         IF @SemesterCount < 2
---         BEGIN
---             RAISERROR('SemesterCount must be at least 2.', 16, 2);
---             ROLLBACK TRANSACTION;
---             RETURN;
---         END;
+        IF @SemesterCount < 2
+        BEGIN
+            RAISERROR('SemesterCount must be at least 2.', 16, 2);
+            ROLLBACK TRANSACTION;
+            RETURN;
+        END;
 
---         IF @EnrollmentLimit <= 0
---         BEGIN
---             RAISERROR('EnrollmentLimit must be greater than 0.', 16, 3);
---             ROLLBACK TRANSACTION;
---             RETURN;
---         END;
+        IF @EnrollmentLimit <= 0
+        BEGIN
+            RAISERROR('EnrollmentLimit must be greater than 0.', 16, 3);
+            ROLLBACK TRANSACTION;
+            RETURN;
+        END;
 
---         IF @EnrollmentDeadline < GETDATE()
---         BEGIN
---             RAISERROR('EnrollmentDeadline must be in the future.', 16, 4);
---             ROLLBACK TRANSACTION;
---             RETURN;
---         END;
+        IF @EnrollmentDeadline < GETDATE()
+        BEGIN
+            RAISERROR('EnrollmentDeadline must be in the future.', 16, 4);
+            ROLLBACK TRANSACTION;
+            RETURN;
+        END;
 
---         DECLARE @NextStudiesID INT;
+        DECLARE @NextStudiesID INT;
 
---         IF NOT EXISTS (SELECT 1 FROM Studies)
---         BEGIN
---             SET @NextStudiesID = 1;
---         END
---         ELSE
---         BEGIN
---             SELECT @NextStudiesID = MAX(StudiesID) + 1 FROM Studies;
---         END;
+        IF NOT EXISTS (SELECT 1 FROM Studies)
+        BEGIN
+            SET @NextStudiesID = 1;
+        END
+        ELSE
+        BEGIN
+            SELECT @NextStudiesID = MAX(StudiesID) + 1 FROM Studies;
+        END;
 
---         INSERT INTO Studies
---             (StudiesID, StudiesName, StudiesDescription, StudiesCoordinatorID,
---              EnrollmentLimit, EnrollmentDeadline, SemesterCount, ExpectedGraduationDate)
---         VALUES
---             (
---                 @NextStudiesID,
---                 @StudiesName,
---                 @StudiesDescription,
---                 @CoordinatorID,
---                 @EnrollmentLimit,
---                 @EnrollmentDeadline,
---                 @SemesterCount,
---                 NULL
---             );
+        DECLARE @GraduationDate DATE;
+        SET @GraduationDate = DATEADD(DAY, 150 * @SemesterCount, @EnrollmentDeadline);
 
---         DECLARE @SemesterIndex INT = 1;
---         DECLARE @StartDate     DATE = DATEADD(DAY, 1, @EnrollmentDeadline);
---         DECLARE @EndDate       DATE;
---         DECLARE @InternshipStart DATE = NULL;
+        DECLARE @NextServiceID INT;
+        IF NOT EXISTS (SELECT 1 FROM Services)
+        BEGIN
+            SET @NextServiceID = 1;
+        END
+        ELSE
+        BEGIN
+            SELECT @NextServiceID = MAX(ServiceID) + 1 FROM Services;
+        END;
 
---         DECLARE @NextSemesterID INT;
+        INSERT INTO Studies
+            (StudiesID, StudiesName, StudiesDescription, StudiesCoordinatorID,
+             EnrollmentLimit, EnrollmentDeadline, SemesterCount, ExpectedGraduationDate, ServiceID)
+        VALUES
+            (
+                @NextStudiesID,
+                @StudiesName,
+                @StudiesDescription,
+                @CoordinatorID,
+                @EnrollmentLimit,
+                @EnrollmentDeadline,
+                @SemesterCount,
+                @GraduationDate,
+                @NextServiceID
+            );
 
---         IF NOT EXISTS (SELECT 1 FROM SemesterDetails)
---         BEGIN
---             SET @NextSemesterID = 1;
---         END
---         ELSE
---         BEGIN
---             SELECT @NextSemesterID = MAX(SemesterID) + 1 FROM SemesterDetails;
---         END;
+        DECLARE @SemesterIndex INT = 1;
+        DECLARE @StartDate     DATE = DATEADD(DAY, 1, @EnrollmentDeadline);
+        DECLARE @EndDate       DATE;
+        DECLARE @InternshipStart DATE = NULL;
 
---         WHILE @SemesterIndex <= @SemesterCount
---         BEGIN
---             SET @EndDate = DATEADD(DAY, 120, @StartDate);
+        DECLARE @NextSemesterID INT;
 
---             INSERT INTO SemesterDetails
---                 (SemesterID, StudiesID, StartDate, EndDate)
---             VALUES
---                 (
---                     @NextSemesterID,
---                     @NextStudiesID,
---                     @StartDate,
---                     @EndDate
---                 );
+        IF NOT EXISTS (SELECT 1 FROM SemesterDetails)
+        BEGIN
+            SET @NextSemesterID = 1;
+        END
+        ELSE
+        BEGIN
+            SELECT @NextSemesterID = MAX(SemesterID) + 1 FROM SemesterDetails;
+        END;
 
---             IF @SemesterIndex = @SemesterCount - 1
---             BEGIN
---                 SET @InternshipStart = @StartDate;
---             END;
+        WHILE @SemesterIndex <= @SemesterCount
+        BEGIN
+            SET @EndDate = DATEADD(DAY, 120, @StartDate);
 
---             SET @SemesterIndex += 1;
---             SET @NextSemesterID += 1;
+            INSERT INTO SemesterDetails
+                (SemesterID, StudiesID, StartDate, EndDate)
+            VALUES
+                (
+                    @NextSemesterID,
+                    @NextStudiesID,
+                    @StartDate,
+                    @EndDate
+                );
 
---             IF @SemesterIndex <= @SemesterCount
---             BEGIN
---                 SET @StartDate = DATEADD(DAY, 30 , @EndDate);
---             END;
---         END;
+            IF @SemesterIndex = @SemesterCount - 1
+            BEGIN
+                SET @InternshipStart = @StartDate;
+            END;
 
---         UPDATE Studies
---             SET ExpectedGraduationDate = @EndDate
---         WHERE StudiesID = @NextStudiesID;
+            SET @SemesterIndex += 1;
+            SET @NextSemesterID += 1;
 
---         DECLARE @NextInternshipID INT;
---         IF NOT EXISTS (SELECT 1 FROM Internship)
---         BEGIN
---             SET @NextInternshipID = 1;
---         END
---         ELSE
---         BEGIN
---             SELECT @NextInternshipID = MAX(InternshipID) + 1 FROM Internship;
---         END;
+            IF @SemesterIndex <= @SemesterCount
+            BEGIN
+                SET @StartDate = DATEADD(DAY, 30 , @EndDate);
+            END;
+        END;
 
---         INSERT INTO Internship
---             (InternshipID, StudiesID, StartDate)
---         VALUES
---             (
---                 @NextInternshipID,
---                 @NextStudiesID,
---                 @InternshipStart
---             );
+        UPDATE Studies
+            SET ExpectedGraduationDate = @EndDate
+        WHERE StudiesID = @NextStudiesID;
 
---         COMMIT TRANSACTION;
---     END TRY
+        DECLARE @NextInternshipID INT;
+        IF NOT EXISTS (SELECT 1 FROM Internship)
+        BEGIN
+            SET @NextInternshipID = 1;
+        END
+        ELSE
+        BEGIN
+            SELECT @NextInternshipID = MAX(InternshipID) + 1 FROM Internship;
+        END;
 
---     BEGIN CATCH
---         IF @@TRANCOUNT > 0
---             ROLLBACK TRANSACTION;
---         THROW;
---     END CATCH;
--- END;
--- GO
+        INSERT INTO Internship
+            (InternshipID, StudiesID, StartDate)
+        VALUES
+            (
+                @NextInternshipID,
+                @NextStudiesID,
+                @InternshipStart
+            );
+
+        COMMIT TRANSACTION;
+    END TRY
+
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0
+            ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH;
+END;
+GO
 
 
 -- CREATE OR ALTER PROCEDURE p_AddSubject
@@ -576,8 +590,8 @@
 --     @GroupSize     INT,
 --     @StartDate     DATETIME,
 --     @Duration      TIME(0),
---     @PriceStudents money,
---     @PriceOthers   money
+--     @PriceStudents MONEY,
+--     @PriceOthers   MONEY
 -- )
 -- AS
 -- BEGIN
@@ -586,16 +600,19 @@
 --     BEGIN TRY
 --         BEGIN TRANSACTION;
 
+--         DECLARE @DurationSeconds INT;
+--         SET @DurationSeconds = DATEDIFF(SECOND, '00:00:00', CAST(@Duration AS DATETIME));
+
 --         DECLARE @EndDate DATETIME;
---         SET @EndDate = DATEADD(SECOND, DATEDIFF(SECOND, 0, @Duration), @StartDate);
+--         SET @EndDate = DATEADD(SECOND, @DurationSeconds, @StartDate);
 
 --         IF NOT EXISTS
 --         (
 --             SELECT 1
 --             FROM Convention c
 --             WHERE c.SubjectID = @SubjectID
---               AND @StartDate >= c.StartDate
---               AND @EndDate <= DATEADD(DAY, c.Duration, c.StartDate)
+--               AND @StartDate >= CAST(c.StartDate AS DATETIME)
+--               AND @EndDate <= DATEADD(DAY, ISNULL(c.Duration, 0), CAST(c.StartDate AS DATETIME))
 --         )
 --         BEGIN
 --             RAISERROR(
@@ -614,7 +631,7 @@
 --               AND rs.ScheduleOnDate = CAST(@StartDate AS DATE)
 --               AND (
 --                   (rs.StartTime <= CONVERT(TIME(0), @StartDate) AND rs.EndTime > CONVERT(TIME(0), @StartDate)) OR 
---                   (rs.StartTime >= CONVERT(TIME(0), @StartDate) AND rs.EndTime <= CONVERT(TIME(0), @EndDate))
+--                   (rs.StartTime < CONVERT(TIME(0), @EndDate) AND rs.EndTime >= CONVERT(TIME(0), @EndDate))
 --               )
 --         )
 --         BEGIN
@@ -630,12 +647,13 @@
 --             RETURN;
 --         END;
 
---         IF NOT EXISTS (SELECT 1 FROM Users WHERE UserID = @TeacherID and UserTypeID = 2)
+--         IF NOT EXISTS (SELECT 1 FROM Users WHERE UserID = @TeacherID AND UserTypeID = 2)
 --         BEGIN
 --             RAISERROR('Invalid TeacherID: no matching Employee found.', 16, 4);
 --             ROLLBACK TRANSACTION;
 --             RETURN;
 --         END;
+
 --         IF EXISTS
 --         (
 --             SELECT 1
@@ -653,12 +671,13 @@
 
 --         IF @TranslatorID IS NOT NULL
 --         BEGIN
---             IF NOT EXISTS (SELECT 1 FROM Users WHERE UserID = @TranslatorID and UserTypeID = 3)
+--             IF NOT EXISTS (SELECT 1 FROM Users WHERE UserID = @TranslatorID AND UserTypeID = 3)
 --             BEGIN
 --                 RAISERROR('Invalid TranslatorID: no matching Employee found.', 16, 5);
 --                 ROLLBACK TRANSACTION;
 --                 RETURN;
 --             END;
+
 --             IF EXISTS
 --             (
 --                 SELECT 1
@@ -776,9 +795,9 @@
 --     @LanguageID    INT = NULL,
 --     @Link          VARCHAR(50),
 --     @StartDate     DATETIME,
---     @Duration      DATETIME,
---     @PriceStudents money,
---     @PriceOthers   money
+--     @Duration      TIME(0),
+--     @PriceStudents MONEY,
+--     @PriceOthers   MONEY
 -- )
 -- AS
 -- BEGIN
@@ -787,16 +806,19 @@
 --     BEGIN TRY
 --         BEGIN TRANSACTION;
 
+--         DECLARE @DurationSeconds INT;
+--         SET @DurationSeconds = DATEDIFF(SECOND, '00:00:00', CAST(@Duration AS DATETIME));
+
 --         DECLARE @EndDate DATETIME;
---         SET @EndDate = DATEADD(SECOND, DATEDIFF(SECOND, 0, @Duration), @StartDate);
+--         SET @EndDate = DATEADD(SECOND, @DurationSeconds, @StartDate);
 
 --         IF NOT EXISTS
 --         (
 --             SELECT 1
 --             FROM Convention c
 --             WHERE c.SubjectID = @SubjectID
---               AND @StartDate >= c.StartDate
---               AND @EndDate <= DATEADD(MINUTE, DATEDIFF(MINUTE, 0, c.Duration), c.StartDate)
+--               AND @StartDate >= CAST(c.StartDate AS DATETIME)
+--               AND @EndDate <= DATEADD(DAY, ISNULL(c.Duration, 0), CAST(c.StartDate AS DATETIME))
 --         )
 --         BEGIN
 --             RAISERROR(
@@ -814,12 +836,13 @@
 --             RETURN;
 --         END;
 
---         IF NOT EXISTS (SELECT 1 FROM Users WHERE UserID = @TeacherID and UserTypeID = 2)
+--         IF NOT EXISTS (SELECT 1 FROM Users WHERE UserID = @TeacherID AND UserTypeID = 2)
 --         BEGIN
 --             RAISERROR('Invalid TeacherID: no matching Employee found.', 16, 3);
 --             ROLLBACK TRANSACTION;
 --             RETURN;
 --         END;
+
 --         IF EXISTS
 --         (
 --             SELECT 1
@@ -837,12 +860,13 @@
 
 --         IF @TranslatorID IS NOT NULL
 --         BEGIN
---             IF NOT EXISTS (SELECT 1 FROM Users WHERE UserID = @TranslatorID and UserTypeID = 3)
+--             IF NOT EXISTS (SELECT 1 FROM Users WHERE UserID = @TranslatorID AND UserTypeID = 3)
 --             BEGIN
 --                 RAISERROR('Invalid TranslatorID: no matching Employee found.', 16, 5);
 --                 ROLLBACK TRANSACTION;
 --                 RETURN;
 --             END;
+
 --             IF EXISTS
 --             (
 --                 SELECT 1
@@ -876,7 +900,7 @@
 --             RETURN;
 --         END;
 
---         IF @Duration < 0
+--         IF @Duration < CAST('00:00:00' AS TIME)
 --         BEGIN
 --             RAISERROR('Duration cannot be negative.', 16, 9);
 --             ROLLBACK TRANSACTION;
@@ -950,6 +974,7 @@
 -- END;
 -- GO
 
+
 -- CREATE OR ALTER PROCEDURE p_CreateOfflineVideoClass
 -- (
 --     @SubjectID   INT,
@@ -976,7 +1001,7 @@
 --             FROM Convention c
 --             WHERE c.SubjectID = @SubjectID
 --               AND @StartDate >= c.StartDate
---               AND @Deadline <= DATEADD(MINUTE, DATEDIFF(MINUTE, 0, c.Duration), c.StartDate)
+--               AND @Deadline <= DATEADD(DAY, ISNULL(c.Duration, 0), CAST(c.StartDate AS DATETIME))
 --         )
 --         BEGIN
 --             RAISERROR(
@@ -1407,7 +1432,7 @@
 -- END;
 
 -- CREATE OR ALTER PROCEDURE p_AddConvention
--- (
+--     (
 --     @SubjectID INT,
 --     @SemesterID     INT,
 --     @ConventionDate DATE,
@@ -1420,57 +1445,86 @@
 --     BEGIN TRY
 --         BEGIN TRANSACTION;
 
---         IF NOT EXISTS (SELECT 1 FROM SemesterDetails WHERE SemesterID = @SemesterID)
+--         IF NOT EXISTS (SELECT 1
+--     FROM SemesterDetails
+--     WHERE SemesterID = @SemesterID)
 --         BEGIN
---             RAISERROR('Invalid SemesterID: no matching semester.', 16, 1);
---             ROLLBACK TRANSACTION;
---             RETURN;
---         END;
+--         RAISERROR('Invalid SemesterID: no matching semester.', 16, 1);
+--         ROLLBACK TRANSACTION;
+--         RETURN;
+--     END;
 
---         IF NOT EXISTS (SELECT 1 FROM Subject WHERE SubjectID = @SubjectID)
+--         IF NOT EXISTS (SELECT 1
+--     FROM Subject
+--     WHERE SubjectID = @SubjectID)
 --         BEGIN
---             RAISERROR('Invalid SubjectID: no matching subject.', 16, 2);
---             ROLLBACK TRANSACTION;
---             RETURN;
---         END;
+--         RAISERROR('Invalid SubjectID: no matching subject.', 16, 2);
+--         ROLLBACK TRANSACTION;
+--         RETURN;
+--     END;
 
 --         IF @Duration < 0
 --         BEGIN
---             RAISERROR('Duration cannot be negative.', 16, 3);
---             ROLLBACK TRANSACTION;
---             RETURN;
---         END;
+--         RAISERROR('Duration cannot be negative.', 16, 3);
+--         ROLLBACK TRANSACTION;
+--         RETURN;
+--     END;
 
 --         DECLARE @SemStart DATE, @SemEnd DATE;
---         SELECT @SemStart = StartDate, 
---                @SemEnd   = EndDate
---         FROM SemesterDetails
---         WHERE SemesterID = @SemesterID;
+--         SELECT @SemStart = StartDate,
+--         @SemEnd   = EndDate
+--     FROM SemesterDetails
+--     WHERE SemesterID = @SemesterID;
 
 --         IF @ConventionDate < @SemStart OR DATEADD(DAY, @Duration, @ConventionDate) > @SemEnd
 --         BEGIN
---             RAISERROR(
+--         RAISERROR(
 --                 'Convention date must fall within the semester start/end dates.',
 --                 16, 4
 --             );
---             ROLLBACK TRANSACTION;
---             RETURN;
---         END;
+--         ROLLBACK TRANSACTION;
+--         RETURN;
+--     END;
 
 --         DECLARE @NextConventionID INT;
---         IF NOT EXISTS (SELECT 1 FROM Convention)
+--         IF NOT EXISTS (SELECT 1
+--     FROM Convention)
 --         BEGIN
---             SET @NextConventionID = 1;
---         END
+--         SET @NextConventionID = 1;
+--     END
 --         ELSE
 --         BEGIN
---             SELECT @NextConventionID = MAX(ConventionID) + 1 FROM Convention;
---         END;
+--         SELECT @NextConventionID = MAX(ConventionID) + 1
+--         FROM Convention;
+--     END;
+
+--         DECLARE @NextServiceID INT;
+--         IF NOT EXISTS (SELECT 1
+--     FROM Services)
+--         BEGIN
+--         SET @NextServiceID = 1;
+--     END
+--         ELSE
+--         BEGIN
+--         SELECT @NextServiceID = MAX(ServiceID) + 1
+--         FROM Services;
+--     END;
 
 --         INSERT INTO Convention
---             (ConventionID, StartDate, SemesterID, Duration)
---         VALUES
---             (@NextConventionID, @ConventionDate, @SemesterID, @Duration);
+--         (ConventionID, SubjectID, StartDate, SemesterID, Duration, ServiceID)
+--     VALUES
+--         (@NextConventionID, @SubjectID, @ConventionDate, @SemesterID, @Duration, @NextServiceID);
+
+--         INSERT INTO Services
+--         (ServiceID, ServiceType)
+--     VALUES
+--         (@NextServiceID, 'ConventionService');
+        
+--         INSERT INTO ConventionService
+--         (ServiceID, Price)
+--     VALUES
+--         (@NextServiceID, 0);
+
 
 --         COMMIT TRANSACTION;
 --     END TRY
@@ -2132,7 +2186,7 @@
 --             DELETE FROM StationaryClass
 --             WHERE MeetingID = @MeetingID;
 --         END
---         ELSE IF @MeetingType = 'OnlineLive'
+--         ELSE IF @MeetingType LIKE '%Online%'
 --         BEGIN
 --             DELETE FROM OnlineLiveClass
 --             WHERE MeetingID = @MeetingID;
@@ -2208,7 +2262,7 @@
 --         SELECT ClassMeetingID
 --         FROM ClassMeeting
 --         WHERE SubjectID = @TargetSubject
---         AND MeetingType = 'OnlineLive'
+--         AND MeetingType LIKE '%Online%'
 --         AND ClassMeetingID IN (
 --             SELECT MeetingID
 --             FROM OnlineLiveClass
@@ -2351,6 +2405,23 @@
 
 --         DELETE FROM SubjectStudiesAssignment
 --         WHERE SubjectID = @SubjectID;
+
+--         DECLARE @MeetingID INT;
+--         DECLARE MeetingCursor CURSOR FOR
+--         SELECT ClassMeetingID
+--         FROM ClassMeeting
+--         WHERE SubjectID = @SubjectID;
+
+--         OPEN MeetingCursor;
+--         FETCH NEXT FROM MeetingCursor INTO @MeetingID;
+--         WHILE @@FETCH_STATUS = 0
+--         BEGIN
+--             EXEC [dbo].p_DeleteClassMeeting @MeetingID;
+--             FETCH NEXT FROM MeetingCursor INTO @MeetingID;
+--         END;
+
+--         CLOSE MeetingCursor;
+--         DEALLOCATE MeetingCursor;
 
 --         COMMIT TRANSACTION;
 --     END TRY

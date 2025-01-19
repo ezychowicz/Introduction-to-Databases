@@ -15,11 +15,11 @@ NUM_LANGUAGES          = 5
 NUM_DEGREES            = 5
 
 NUM_USERS              = 1500  # total
-NUM_USERCONTACT        = 75
-NUM_USERADDRESS        = 75
-NUM_EMPLOYEES          = 50   # subset of users
-NUM_STUDENTS           = 1250   # subset of users
-NUM_TRANSLATORS        = 5    # subset of employees
+NUM_USERCONTACT        = 1500
+NUM_USERADDRESS        = 1200
+NUM_EMPLOYEES          = 100   # subset of users
+NUM_STUDENTS           = 1400   # subset of users
+NUM_TRANSLATORS        = 8    # subset of employees
 MIN_EMPLOYEE_SUPERIORS = 0
 
 # =============== COLLEGE/ACADEMIC
@@ -29,7 +29,7 @@ NUM_SUBJECTS           = 40
 MIN_SEMESTERS_PER_STUDY = 4
 MAX_SEMESTERS_PER_STUDY = 7
 MIN_SUBJECTS_PER_STUDY  = 5
-MAX_SUBJECTS_PER_STUDY  = 10
+MAX_SUBJECTS_PER_STUDY  = 20
 NUM_INTERNSHIPS          = 4
 NUM_INTERNSHIP_DETAILS   = 8
 MIN_CLASSMEETINGS_PER_SUBJECT = 5
@@ -417,7 +417,7 @@ study_students_map = {}
 
 for st in studies_records:
     study_id = st['StudiesID']
-    chosen_students = random.sample(student_coll_records, k=random.randint(5, st['EnrollmentLimit']))
+    chosen_students = random.sample(student_coll_records, k=random.randint(7, st['EnrollmentLimit']))
     for cs in chosen_students:
         assigned_grade = random.choice(all_grade_ids)
         studies_details_records.append({
