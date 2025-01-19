@@ -14,11 +14,11 @@ NUM_LOCATIONS          = 23
 NUM_LANGUAGES          = 5
 NUM_DEGREES            = 5
 
-NUM_USERS              = 2000  # total
+NUM_USERS              = 1500  # total
 NUM_USERCONTACT        = 75
 NUM_USERADDRESS        = 75
 NUM_EMPLOYEES          = 50   # subset of users
-NUM_STUDENTS           = 1850   # subset of users
+NUM_STUDENTS           = 1250   # subset of users
 NUM_TRANSLATORS        = 5    # subset of employees
 MIN_EMPLOYEE_SUPERIORS = 0
 
@@ -41,10 +41,10 @@ MAX_CONVENTIONS_PER_SEMESTER    = 10
 
 # =============== PAYMENTS
 # NUM_SERVICES           = 12 
-NUM_ORDERS             = 1000
+NUM_ORDERS             = 750
 MIN_SERVICES_PER_ORDER = 1
 MAX_SERVICES_PER_ORDER = 3
-NUM_PAYMENTS           = 10000
+NUM_PAYMENTS           = 2000
 
 # ==============================================================================
 #                               HELPER FUNCTIONS
@@ -690,7 +690,7 @@ for i in range(1, NUM_MODULES + 1):
 # ==============================================================================
 # Meetings
 # ==============================================================================
-NUM_MEETINGS = 5000
+NUM_MEETINGS = 1000
 meeting_types = ["stationary", "offline video", "online live"]
 stationary_meetings_records = []
 offline_video_records = []
@@ -788,7 +788,7 @@ for meeting in stationary_meetings_records:
         stationary_meeting_details_records.append({
             'MeetingID': meeting['MeetingID'],
             'ParticipantID': participantID,
-            'Attendance': random.choice([0,1,1,1,1])  # Obecność na spotkaniu
+            'Attendance': random.choice([0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1])  # Obecność na spotkaniu
         })
 
 for video in offline_video_records:
@@ -799,7 +799,7 @@ for video in offline_video_records:
         offline_video_details_records.append({
             'MeetingID': video['MeetingID'],
             'ParticipantID': participantID,
-            'dateOfViewing': random.choice([faker.date_time_between(start_date='-1y', end_date='now'), 'NULL'])  # Data obejrzenia
+            'dateOfViewing': random.choice([faker.date_time_between(start_date='-1y', end_date='now')]*40+ ['NULL'])  # Data obejrzenia
         })
 
 for live_meeting in online_live_meetings_records:
@@ -810,7 +810,7 @@ for live_meeting in online_live_meetings_records:
         online_live_meeting_details_records.append({
             'MeetingID': live_meeting['MeetingID'],
             'ParticipantID': participantID,
-            'Attendance': random.choice([0,1,1,1,1])  # Obecność na spotkaniu
+            'Attendance': random.choice([0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1])  # Obecność na spotkaniu
         })
 
 # ==============================================================================

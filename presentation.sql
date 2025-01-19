@@ -105,10 +105,10 @@ select * from OrderDetails
 where OrderID = 1001
 
 --składanie zamówienia
-exec p_FinalizeOrder 1001, 'www.paymentlink.com' --ustawia date zamowienia na aktualną i dodaje rekordy do Payments 
+exec p_FinalizeOrder 1001, 'www.paymentlink.com' --ustawia date zamowienia na aktualną i dodaje link do platnosci
 
-select * from Payments
-where OrderID = 1001
+--select * from Payments
+--where OrderID = 100
 
 --zgoda dyrektora
 exec p_UpdatePrincipalAgreement 1001, 2146, 1
