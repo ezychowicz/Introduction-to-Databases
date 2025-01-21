@@ -203,167 +203,167 @@
 --         THROW;
 --     END CATCH;
 -- END;
-CREATE OR ALTER PROCEDURE p_CreateStudies
-(
-    @StudiesName         VARCHAR(200),
-    @StudiesDescription  VARCHAR(1000),
-    @CoordinatorID       INT,
-    @EnrollmentLimit     INT,
-    @EnrollmentDeadline  DATE,
-    @SemesterCount       INT
-)
-AS
-BEGIN
-    SET NOCOUNT ON;
+-- CREATE OR ALTER PROCEDURE p_CreateStudies
+-- (
+--     @StudiesName         VARCHAR(200),
+--     @StudiesDescription  VARCHAR(1000),
+--     @CoordinatorID       INT,
+--     @EnrollmentLimit     INT,
+--     @EnrollmentDeadline  DATE,
+--     @SemesterCount       INT
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
 
-    BEGIN TRY
-        BEGIN TRANSACTION;
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
 
-        IF NOT EXISTS (SELECT 1 FROM Employees WHERE EmployeeID = @CoordinatorID)
-        BEGIN
-            RAISERROR('Invalid CoordinatorID: no matching Employee found.', 16, 1);
-            ROLLBACK TRANSACTION;
-            RETURN;
-        END;
+--         IF NOT EXISTS (SELECT 1 FROM Employees WHERE EmployeeID = @CoordinatorID)
+--         BEGIN
+--             RAISERROR('Invalid CoordinatorID: no matching Employee found.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
 
-        IF @SemesterCount < 2
-        BEGIN
-            RAISERROR('SemesterCount must be at least 2.', 16, 2);
-            ROLLBACK TRANSACTION;
-            RETURN;
-        END;
+--         IF @SemesterCount < 2
+--         BEGIN
+--             RAISERROR('SemesterCount must be at least 2.', 16, 2);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
 
-        IF @EnrollmentLimit <= 0
-        BEGIN
-            RAISERROR('EnrollmentLimit must be greater than 0.', 16, 3);
-            ROLLBACK TRANSACTION;
-            RETURN;
-        END;
+--         IF @EnrollmentLimit <= 0
+--         BEGIN
+--             RAISERROR('EnrollmentLimit must be greater than 0.', 16, 3);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
 
-        IF @EnrollmentDeadline < GETDATE()
-        BEGIN
-            RAISERROR('EnrollmentDeadline must be in the future.', 16, 4);
-            ROLLBACK TRANSACTION;
-            RETURN;
-        END;
+--         IF @EnrollmentDeadline < GETDATE()
+--         BEGIN
+--             RAISERROR('EnrollmentDeadline must be in the future.', 16, 4);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
 
-        DECLARE @NextStudiesID INT;
+--         DECLARE @NextStudiesID INT;
 
-        IF NOT EXISTS (SELECT 1 FROM Studies)
-        BEGIN
-            SET @NextStudiesID = 1;
-        END
-        ELSE
-        BEGIN
-            SELECT @NextStudiesID = MAX(StudiesID) + 1 FROM Studies;
-        END;
+--         IF NOT EXISTS (SELECT 1 FROM Studies)
+--         BEGIN
+--             SET @NextStudiesID = 1;
+--         END
+--         ELSE
+--         BEGIN
+--             SELECT @NextStudiesID = MAX(StudiesID) + 1 FROM Studies;
+--         END;
 
-        DECLARE @GraduationDate DATE;
-        SET @GraduationDate = DATEADD(DAY, 150 * @SemesterCount, @EnrollmentDeadline);
+--         DECLARE @GraduationDate DATE;
+--         SET @GraduationDate = DATEADD(DAY, 150 * @SemesterCount, @EnrollmentDeadline);
 
-        DECLARE @NextServiceID INT;
-        IF NOT EXISTS (SELECT 1 FROM Services)
-        BEGIN
-            SET @NextServiceID = 1;
-        END
-        ELSE
-        BEGIN
-            SELECT @NextServiceID = MAX(ServiceID) + 1 FROM Services;
-        END;
+--         DECLARE @NextServiceID INT;
+--         IF NOT EXISTS (SELECT 1 FROM Services)
+--         BEGIN
+--             SET @NextServiceID = 1;
+--         END
+--         ELSE
+--         BEGIN
+--             SELECT @NextServiceID = MAX(ServiceID) + 1 FROM Services;
+--         END;
 
-        INSERT INTO Studies
-            (StudiesID, StudiesName, StudiesDescription, StudiesCoordinatorID,
-             EnrollmentLimit, EnrollmentDeadline, SemesterCount, ExpectedGraduationDate, ServiceID)
-        VALUES
-            (
-                @NextStudiesID,
-                @StudiesName,
-                @StudiesDescription,
-                @CoordinatorID,
-                @EnrollmentLimit,
-                @EnrollmentDeadline,
-                @SemesterCount,
-                @GraduationDate,
-                @NextServiceID
-            );
+--         INSERT INTO Studies
+--             (StudiesID, StudiesName, StudiesDescription, StudiesCoordinatorID,
+--              EnrollmentLimit, EnrollmentDeadline, SemesterCount, ExpectedGraduationDate, ServiceID)
+--         VALUES
+--             (
+--                 @NextStudiesID,
+--                 @StudiesName,
+--                 @StudiesDescription,
+--                 @CoordinatorID,
+--                 @EnrollmentLimit,
+--                 @EnrollmentDeadline,
+--                 @SemesterCount,
+--                 @GraduationDate,
+--                 @NextServiceID
+--             );
 
-        DECLARE @SemesterIndex INT = 1;
-        DECLARE @StartDate     DATE = DATEADD(DAY, 1, @EnrollmentDeadline);
-        DECLARE @EndDate       DATE;
-        DECLARE @InternshipStart DATE = NULL;
+--         DECLARE @SemesterIndex INT = 1;
+--         DECLARE @StartDate     DATE = DATEADD(DAY, 1, @EnrollmentDeadline);
+--         DECLARE @EndDate       DATE;
+--         DECLARE @InternshipStart DATE = NULL;
 
-        DECLARE @NextSemesterID INT;
+--         DECLARE @NextSemesterID INT;
 
-        IF NOT EXISTS (SELECT 1 FROM SemesterDetails)
-        BEGIN
-            SET @NextSemesterID = 1;
-        END
-        ELSE
-        BEGIN
-            SELECT @NextSemesterID = MAX(SemesterID) + 1 FROM SemesterDetails;
-        END;
+--         IF NOT EXISTS (SELECT 1 FROM SemesterDetails)
+--         BEGIN
+--             SET @NextSemesterID = 1;
+--         END
+--         ELSE
+--         BEGIN
+--             SELECT @NextSemesterID = MAX(SemesterID) + 1 FROM SemesterDetails;
+--         END;
 
-        WHILE @SemesterIndex <= @SemesterCount
-        BEGIN
-            SET @EndDate = DATEADD(DAY, 120, @StartDate);
+--         WHILE @SemesterIndex <= @SemesterCount
+--         BEGIN
+--             SET @EndDate = DATEADD(DAY, 120, @StartDate);
 
-            INSERT INTO SemesterDetails
-                (SemesterID, StudiesID, StartDate, EndDate)
-            VALUES
-                (
-                    @NextSemesterID,
-                    @NextStudiesID,
-                    @StartDate,
-                    @EndDate
-                );
+--             INSERT INTO SemesterDetails
+--                 (SemesterID, StudiesID, StartDate, EndDate)
+--             VALUES
+--                 (
+--                     @NextSemesterID,
+--                     @NextStudiesID,
+--                     @StartDate,
+--                     @EndDate
+--                 );
 
-            IF @SemesterIndex = @SemesterCount - 1
-            BEGIN
-                SET @InternshipStart = @StartDate;
-            END;
+--             IF @SemesterIndex = @SemesterCount - 1
+--             BEGIN
+--                 SET @InternshipStart = @StartDate;
+--             END;
 
-            SET @SemesterIndex += 1;
-            SET @NextSemesterID += 1;
+--             SET @SemesterIndex += 1;
+--             SET @NextSemesterID += 1;
 
-            IF @SemesterIndex <= @SemesterCount
-            BEGIN
-                SET @StartDate = DATEADD(DAY, 30 , @EndDate);
-            END;
-        END;
+--             IF @SemesterIndex <= @SemesterCount
+--             BEGIN
+--                 SET @StartDate = DATEADD(DAY, 30 , @EndDate);
+--             END;
+--         END;
 
-        UPDATE Studies
-            SET ExpectedGraduationDate = @EndDate
-        WHERE StudiesID = @NextStudiesID;
+--         UPDATE Studies
+--             SET ExpectedGraduationDate = @EndDate
+--         WHERE StudiesID = @NextStudiesID;
 
-        DECLARE @NextInternshipID INT;
-        IF NOT EXISTS (SELECT 1 FROM Internship)
-        BEGIN
-            SET @NextInternshipID = 1;
-        END
-        ELSE
-        BEGIN
-            SELECT @NextInternshipID = MAX(InternshipID) + 1 FROM Internship;
-        END;
+--         DECLARE @NextInternshipID INT;
+--         IF NOT EXISTS (SELECT 1 FROM Internship)
+--         BEGIN
+--             SET @NextInternshipID = 1;
+--         END
+--         ELSE
+--         BEGIN
+--             SELECT @NextInternshipID = MAX(InternshipID) + 1 FROM Internship;
+--         END;
 
-        INSERT INTO Internship
-            (InternshipID, StudiesID, StartDate)
-        VALUES
-            (
-                @NextInternshipID,
-                @NextStudiesID,
-                @InternshipStart
-            );
+--         INSERT INTO Internship
+--             (InternshipID, StudiesID, StartDate)
+--         VALUES
+--             (
+--                 @NextInternshipID,
+--                 @NextStudiesID,
+--                 @InternshipStart
+--             );
 
-        COMMIT TRANSACTION;
-    END TRY
+--         COMMIT TRANSACTION;
+--     END TRY
 
-    BEGIN CATCH
-        IF @@TRANCOUNT > 0
-            ROLLBACK TRANSACTION;
-        THROW;
-    END CATCH;
-END;
-GO
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+--         THROW;
+--     END CATCH;
+-- END;
+-- GO
 
 
 -- CREATE OR ALTER PROCEDURE p_AddSubject
@@ -566,7 +566,6 @@ GO
 
 --             SET @SemesterID += 1;
 --         END; 
---          TODO: Enroll on all meetings assigned to this study
 
 --         COMMIT TRANSACTION;
 --     END TRY
@@ -1519,7 +1518,7 @@ GO
 --         (ServiceID, ServiceType)
 --     VALUES
 --         (@NextServiceID, 'ConventionService');
-        
+
 --         INSERT INTO ConventionService
 --         (ServiceID, Price)
 --     VALUES
@@ -3131,7 +3130,7 @@ GO
 --     BEGIN TRY
 --         BEGIN TRANSACTION;
 
-       
+
 --         IF NOT EXISTS (SELECT 1 FROM ClassMeetingService WHERE ServiceID = @ServiceID)
 --         BEGIN
 --             RAISERROR('Invalid ServiceID: no matching service found in ClassMeetingService.', 16, 1);
@@ -3139,7 +3138,7 @@ GO
 --             RETURN;
 --         END;
 
-        
+
 --         IF @PriceStudents IS NOT NULL AND @PriceStudents <= 0
 --         BEGIN
 --             RAISERROR('PriceStudents must be greater than 0.', 16, 1);
@@ -3154,7 +3153,7 @@ GO
 --             RETURN;
 --         END;
 
-       
+
 --         UPDATE ClassMeetingService
 --         SET 
 --             PriceStudents = CASE WHEN @PriceStudents IS NOT NULL THEN @PriceStudents ELSE PriceStudents END,
@@ -3190,7 +3189,7 @@ GO
 --             RETURN;
 --         END;
 
- 
+
 --         IF @Price <= 0
 --         BEGIN
 --             RAISERROR('Price must be greater than 0.', 16, 1);
@@ -3198,7 +3197,7 @@ GO
 --             RETURN;
 --         END;
 
-     
+
 --         UPDATE ConventionService
 --         SET Price = @Price
 --         WHERE ServiceID = @ServiceID;
@@ -3228,7 +3227,7 @@ GO
 --     BEGIN TRY
 --         BEGIN TRANSACTION;
 
-      
+
 --         IF NOT EXISTS (SELECT 1 FROM Courses WHERE CourseID = @CourseID)
 --         BEGIN
 --             RAISERROR('Invalid CourseID: no matching course found.', 16, 1);
@@ -3236,7 +3235,7 @@ GO
 --             RETURN;
 --         END;
 
-      
+
 --         IF @CourseName IS NOT NULL
 --         BEGIN
 --             IF @CourseName = ''
@@ -3286,7 +3285,7 @@ GO
 --             WHERE CourseID = @CourseID;
 --         END;
 
- 
+
 --         IF @EnrollmentLimit IS NOT NULL
 --         BEGIN
 --             IF @EnrollmentLimit <= 1
@@ -3300,7 +3299,7 @@ GO
 --             WHERE CourseID = @CourseID;
 --         END;
 
-     
+
 --         COMMIT TRANSACTION;
 --     END TRY
 --     BEGIN CATCH
@@ -3330,7 +3329,7 @@ GO
 --             RETURN;
 --         END;
 
-     
+
 --         IF @AdvanceValue IS NOT NULL AND @AdvanceValue <= 0
 --         BEGIN
 --             RAISERROR('AdvanceValue must be greater than 0.', 16, 1);
@@ -3345,7 +3344,7 @@ GO
 --             RETURN;
 --         END;
 
-       
+
 --         UPDATE CourseService
 --         SET 
 --             AdvanceValue = CASE WHEN @AdvanceValue IS NOT NULL THEN @AdvanceValue ELSE AdvanceValue END,
@@ -3505,11 +3504,11 @@ GO
 --             RETURN;
 --         END;
 
-       
+
 --         UPDATE OfflineVideoDetails
 --         SET DateOfViewing = @DateOfViewing
 --         WHERE MeetingID = @MeetingID AND ParticipantID = @ParticipantID;
-       
+
 
 --         COMMIT TRANSACTION;
 --     END TRY
@@ -3616,11 +3615,11 @@ GO
 --             RETURN;
 --         END;
 
-     
+
 --         UPDATE OnlineLiveMeetingDetails
 --         SET Attendance = @Attendance
 --         WHERE MeetingID = @MeetingID AND ParticipantID = @ParticipantID;
-    
+
 
 --         COMMIT TRANSACTION;
 --     END TRY
@@ -3645,7 +3644,7 @@ GO
 --     BEGIN TRY
 --         BEGIN TRANSACTION;
 
-        
+
 --         IF NOT EXISTS (SELECT 1 FROM Payments WHERE PaymentID = @PaymentID)
 --         BEGIN
 --             RAISERROR('Invalid PaymentID: no matching payment found.', 16, 1);
@@ -3653,7 +3652,7 @@ GO
 --             RETURN;
 --         END;
 
-       
+
 --         IF @PaymentValue IS NOT NULL AND @PaymentValue <= 0
 --         BEGIN
 --             RAISERROR('PaymentValue must be greater than 0.', 16, 1);
@@ -3661,7 +3660,7 @@ GO
 --             RETURN;
 --         END;
 
-       
+
 --         UPDATE Payments
 --         SET 
 --             PaymentValue = CASE WHEN @PaymentValue IS NOT NULL THEN @PaymentValue ELSE PaymentValue END,
@@ -3800,7 +3799,7 @@ GO
 --     BEGIN TRY
 --         BEGIN TRANSACTION;
 
-    
+
 --         IF NOT EXISTS (SELECT 1 FROM StudiesService WHERE ServiceID = @ServiceID)
 --         BEGIN
 --             RAISERROR('Invalid ServiceID: no matching service found in StudiesService.', 16, 1);
@@ -3808,7 +3807,7 @@ GO
 --             RETURN;
 --         END;
 
-  
+
 --         IF @EntryFee <= 0
 --         BEGIN
 --             RAISERROR('EntryFee must be greater than 0.', 16, 1);
@@ -3816,7 +3815,7 @@ GO
 --             RETURN;
 --         END;
 
-  
+
 --         UPDATE StudiesService
 --         SET EntryFee = @EntryFee
 --         WHERE ServiceID = @ServiceID;
@@ -3842,7 +3841,7 @@ GO
 --     BEGIN TRY
 --         BEGIN TRANSACTION;
 
-      
+
 --         IF NOT EXISTS (SELECT 1 FROM WebinarService WHERE ServiceID = @ServiceID)
 --         BEGIN
 --             RAISERROR('Invalid ServiceID: no matching service found in WebinarService.', 16, 1);
@@ -3850,7 +3849,7 @@ GO
 --             RETURN;
 --         END;
 
-      
+
 --         IF @Price <= 0
 --         BEGIN
 --             RAISERROR('Price must be greater than 0.', 16, 1);
@@ -3858,7 +3857,7 @@ GO
 --             RETURN;
 --         END;
 
-   
+
 --         UPDATE WebinarService
 --         SET Price = @Price
 --         WHERE ServiceID = @ServiceID;
@@ -3927,7 +3926,7 @@ GO
 --     BEGIN TRY
 --         BEGIN TRANSACTION;
 
-      
+
 --         IF NOT EXISTS (SELECT 1 FROM ClassMeetingService WHERE ServiceID = @ServiceID)
 --         BEGIN
 --             RAISERROR('Invalid ServiceID: no matching service found in ClassMeetingService.', 16, 1);
@@ -3935,7 +3934,7 @@ GO
 --             RETURN;
 --         END;
 
- 
+
 --         DELETE FROM ClassMeetingService WHERE ServiceID = @ServiceID;
 
 --         COMMIT TRANSACTION;
@@ -3958,7 +3957,7 @@ GO
 --     BEGIN TRY
 --         BEGIN TRANSACTION;
 
-    
+
 --         IF NOT EXISTS (SELECT 1 FROM ConventionService WHERE ServiceID = @ServiceID)
 --         BEGIN
 --             RAISERROR('Invalid ServiceID: no matching service found in ConventionService.', 16, 1);
@@ -3966,7 +3965,7 @@ GO
 --             RETURN;
 --         END;
 
-     
+
 --         DELETE FROM ConventionService WHERE ServiceID = @ServiceID;
 
 --         COMMIT TRANSACTION;
@@ -3989,7 +3988,7 @@ GO
 --     BEGIN TRY
 --         BEGIN TRANSACTION;
 
-   
+
 --         IF NOT EXISTS (SELECT 1 FROM Courses WHERE CourseID = @CourseID)
 --         BEGIN
 --             RAISERROR('Invalid CourseID: no matching course found.', 16, 1);
@@ -4015,11 +4014,11 @@ GO
 -- 		DEALLOCATE ModulesCursor;
 
 
-     
+
 --         DELETE FROM Modules
 --         WHERE CourseID = @CourseID;
 
-  
+
 --         DELETE FROM Courses
 --         WHERE CourseID = @CourseID;
 
@@ -4046,7 +4045,7 @@ GO
 --     BEGIN TRY
 --         BEGIN TRANSACTION;
 
-     
+
 --         IF NOT EXISTS (SELECT 1 FROM CourseParticipants WHERE ParticipantID = @ParticipantID AND CourseID = @CourseID)
 --         BEGIN
 --             RAISERROR('Invalid ParticipantID or CourseID: no matching course participant found.', 16, 1);
@@ -4080,7 +4079,7 @@ GO
 --     BEGIN TRY
 --         BEGIN TRANSACTION;
 
-       
+
 --         IF NOT EXISTS (SELECT 1 FROM CourseService WHERE ServiceID = @ServiceID)
 --         BEGIN
 --             RAISERROR('Invalid ServiceID: no matching service found in CourseService.', 16, 1);
@@ -4088,7 +4087,7 @@ GO
 --             RETURN;
 --         END;
 
- 
+
 --         DELETE FROM CourseService WHERE ServiceID = @ServiceID;
 
 --         COMMIT TRANSACTION;
@@ -4122,7 +4121,7 @@ GO
 
 -- 		DECLARE @MeetingID INT;
 -- 		DECLARE MeetingsCursor CURSOR FOR
-		
+
 -- 		SELECT MeetingID 
 -- 		FROM StationaryMeeting
 -- 		WHERE ModuleID = @ModuleID
@@ -4246,7 +4245,7 @@ GO
 --     BEGIN TRY
 --         BEGIN TRANSACTION;
 
-     
+
 --         IF NOT EXISTS (SELECT 1 FROM OfflineVideoDetails WHERE MeetingID = @MeetingID AND ParticipantID = @ParticipantID)
 --         BEGIN
 --             RAISERROR('Invalid MeetingID or ParticipantID: no matching offline video details found.', 16, 1);
@@ -4254,7 +4253,7 @@ GO
 --             RETURN;
 --         END;
 
-      
+
 --         DELETE FROM OfflineVideoDetails
 --         WHERE MeetingID = @MeetingID AND ParticipantID = @ParticipantID;
 
@@ -4280,7 +4279,7 @@ GO
 --     BEGIN TRY
 --         BEGIN TRANSACTION;
 
-  
+
 --         IF NOT EXISTS (SELECT 1 FROM OnlineLiveMeeting WHERE MeetingID = @MeetingID)
 --         BEGIN
 --             RAISERROR('Invalid MeetingID: no matching online live meeting found.', 16, 1);
@@ -4291,7 +4290,7 @@ GO
 --         DELETE FROM OnlineLiveMeetingDetails
 --         WHERE MeetingID = @MeetingID;
 
-       
+
 --         DELETE FROM OnlineLiveMeeting
 --         WHERE MeetingID = @MeetingID;
 
@@ -4318,7 +4317,7 @@ GO
 --     BEGIN TRY
 --         BEGIN TRANSACTION;
 
-   
+
 --         IF NOT EXISTS (SELECT 1 FROM OnlineLiveMeetingDetails WHERE MeetingID = @MeetingID AND ParticipantID = @ParticipantID)
 --         BEGIN
 --             RAISERROR('Invalid MeetingID or ParticipantID: no matching online live meeting details found.', 16, 1);
@@ -4326,7 +4325,7 @@ GO
 --             RETURN;
 --         END;
 
-    
+
 --         DELETE FROM OnlineLiveMeetingDetails
 --         WHERE MeetingID = @MeetingID AND ParticipantID = @ParticipantID;
 
@@ -4352,7 +4351,7 @@ GO
 --     BEGIN TRY
 --         BEGIN TRANSACTION;
 
-      
+
 --         IF NOT EXISTS (SELECT 1 FROM Orders WHERE OrderID = @OrderID)
 --         BEGIN
 --             RAISERROR('Invalid OrderID: no matching order found.', 16, 1);
@@ -4360,8 +4359,8 @@ GO
 --             RETURN;
 --         END;
 
-		
-	
+
+
 -- 		DECLARE @ServiceID INT;
 -- 		DECLARE OrdersDetailsCursor CURSOR FOR
 -- 		SELECT ServiceID 
@@ -4372,14 +4371,14 @@ GO
 -- 		FETCH NEXT FROM OrdersDetailsCursor INTO @ServiceID;
 -- 		WHILE @@FETCH_STATUS = 0
 -- 		BEGIN
-			
+
 -- 			EXEC p_DeleteOrderDetails @ServiceID, @OrderID;
 -- 			FETCH NEXT FROM OrdersDetailsCursor INTO @ServiceID;
 -- 		END;
 -- 		CLOSE OrdersDetailsCursor;
 -- 		DEALLOCATE OrdersDetailsCursor;
 
-	
+
 -- 		DELETE FROM Orders WHERE OrderID = @OrderID;
 
 --         COMMIT TRANSACTION;
@@ -4403,7 +4402,7 @@ GO
 --     BEGIN TRY
 --         BEGIN TRANSACTION;
 
-   
+
 --         IF NOT EXISTS (SELECT 1 FROM OrderDetails WHERE ServiceID = @ServiceID AND OrderID = @OrderID)
 --         BEGIN
 --             RAISERROR('Invalid ServiceID or OrderID: no matching order details found.', 16, 1);
@@ -4414,7 +4413,7 @@ GO
 -- 		DELETE FROM Payments WHERE ServiceID = @ServiceID AND OrderID = @OrderID
 
 
-      
+
 --         DELETE FROM OrderDetails WHERE ServiceID = @ServiceID AND OrderID = @OrderID;
 
 --         COMMIT TRANSACTION;
@@ -4437,7 +4436,7 @@ GO
 --     BEGIN TRY
 --         BEGIN TRANSACTION;
 
-      
+
 --         IF NOT EXISTS (SELECT 1 FROM Payments WHERE PaymentID = @PaymentID)
 --         BEGIN
 --             RAISERROR('Invalid PaymentID: no matching payment found.', 16, 1);
@@ -4445,7 +4444,7 @@ GO
 --             RETURN;
 --         END;
 
-        
+
 --         DELETE FROM Payments WHERE PaymentID = @PaymentID;
 
 --         COMMIT TRANSACTION;
@@ -4468,22 +4467,22 @@ GO
 --     BEGIN TRY
 --         BEGIN TRANSACTION;
 
-        
+
 --         IF NOT EXISTS (SELECT 1 FROM Services WHERE ServiceID = @ServiceID)
 --         BEGIN
 --             RAISERROR('Invalid ServiceID: no matching service found.', 16, 1);
 --             ROLLBACK TRANSACTION;
 --             RETURN;
 --         END;
-		
+
 -- 		DECLARE @ServiceType VARCHAR(30);
 
-		
+
 -- 		SELECT @ServiceType = ServiceType
 -- 		FROM Services
 -- 		WHERE ServiceID = @ServiceID;
 
-		
+
 -- 		IF @ServiceType = 'CourseService'
 -- 		BEGIN
 -- 			EXEC p_DeleteCourseService @ServiceID;
@@ -4554,8 +4553,8 @@ GO
 
 --         DELETE FROM StationaryMeeting
 --         WHERE MeetingID = @MeetingID;
-		
-		
+
+
 --         COMMIT TRANSACTION;
 --     END TRY
 
@@ -4944,7 +4943,7 @@ GO
 --     BEGIN TRY
 --         BEGIN TRANSACTION;
 
-  
+
 --         IF NOT EXISTS (SELECT 1 FROM ServiceUserDetails WHERE ServiceUserID = @UserID)
 --         BEGIN
 --             RAISERROR('Invalid UserID: no matching user found.', 16, 1);
@@ -6352,3 +6351,326 @@ GO
 --    RETURN @IsEmployee;
 --END;
 --SELECT dbo.f_IsUserEmployee(3) AS IsEmployee;
+
+-- Create or alter FUNCTION totalTimeSpentInClass
+-- (
+--     @UserID INT
+-- )
+-- RETURNS TIME
+-- AS
+-- BEGIN
+--     DECLARE @TotalTime TIME;
+
+--     SET @TotalTime = (
+--         SELECT SUM(DurationTime)
+--         FROM SyncClassDetails scd JOIN SyncClass sc ON scd.ClassID = sc.ClassID
+--         WHERE scd.UserID = @UserID and scd.Attendance = 1
+--     );
+
+--     RETURN @TotalTime;
+-- END;
+
+-- Create or alter FUNCTION CalculateAvailableSeatsStudies
+-- (
+--     @StudiesID INT
+-- )
+-- returns INT
+-- AS
+-- BEGIN
+--     DECLARE @AvailableSeats INT;
+
+--     SET @AvailableSeats = (
+--         SELECT Studies.EnrollmentLimit - COUNT(*)
+--         FROM Studies JOIN StudiesDetails ON Studies.StudiesID = StudiesDetails.StudiesID
+--         WHERE Studies.StudiesID = @StudiesID
+--         GROUP BY Studies.EnrollmentLimit
+--     );
+
+--     RETURN @AvailableSeats;
+-- END;
+
+-- CREATE Or ALTER PROCEDURE p_EnrollStudentInSyncClassMeeting
+-- (
+--     @UserID INT,
+--     @ClassID INT
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+--         IF NOT EXISTS (SELECT 1 FROM ClassMeeting WHERE ClassMeetingID = @ClassID)
+--         BEGIN
+--             RAISERROR('Invalid ClassID: no matching class found.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         IF NOT EXISTS (SELECT 1 FROM Users WHERE UserID = @UserID)
+--         BEGIN
+--             RAISERROR('Invalid UserID: no matching user found.', 16, 2);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         IF EXISTS (SELECT 1 FROM SyncClassDetails WHERE StudentID = @UserID AND MeetingID = @ClassID)
+--         BEGIN
+--             RAISERROR('User is already enrolled in this class.', 16, 3);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         INSERT INTO SyncClassDetails (StudentID, MeetingID, Attendance)
+--         VALUES (@UserID, @ClassID, 0);
+
+--         COMMIT TRANSACTION;
+--     END TRY
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+
+--         THROW;
+--     END CATCH;
+-- END;
+
+-- Create or alter procedure p_EnrollStudentInAsyncClass
+-- (
+--     @UserID INT,
+--     @ClassID INT
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+--         IF NOT EXISTS (SELECT 1 FROM ClassMeeting WHERE ClassMeetingID = @ClassID)
+--         BEGIN
+--             RAISERROR('Invalid ClassID: no matching class found.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         IF NOT EXISTS (SELECT 1 FROM Users WHERE UserID = @UserID)
+--         BEGIN
+--             RAISERROR('Invalid UserID: no matching user found.', 16, 2);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         IF EXISTS (SELECT 1 FROM AsyncClassDetails WHERE StudentID = @UserID AND MeetingID = @ClassID)
+--         BEGIN
+--             RAISERROR('User is already enrolled in this class.', 16, 3);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         INSERT INTO AsyncClassDetails (StudentID, MeetingID)
+--         VALUES (@UserID, @ClassID);
+
+--         COMMIT TRANSACTION;
+--     END TRY
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+
+--         THROW;
+--     END CATCH;
+-- END;
+
+-- CREATE or ALTER PROCEDURE p_EnrollStudentInSubject
+-- (
+--     @UserID INT,
+--     @SubjectID INT
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+--         IF NOT EXISTS (SELECT 1 FROM Subject WHERE SubjectID = @SubjectID)
+--         BEGIN
+--             RAISERROR('Invalid SubjectID: no matching subject found.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         IF NOT EXISTS (SELECT 1 FROM Users WHERE UserID = @UserID)
+--         BEGIN
+--             RAISERROR('Invalid UserID: no matching user found.', 16, 2);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         IF EXISTS (SELECT 1 FROM SubjectDetails WHERE StudentID = @UserID AND SubjectID = @SubjectID)
+--         BEGIN
+--             RAISERROR('User is already enrolled in this subject.', 16, 3);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         INSERT INTO SubjectDetails (StudentID, SubjectID)
+--         VALUES (@UserID, @SubjectID);
+
+--         COMMIT TRANSACTION;
+--     END TRY
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+
+--         THROW;
+--     END CATCH;
+-- END;
+
+-- CREATE Or ALTER Procedure p_EnrollStudentInSyncClassMeeting
+-- (
+--     @UserID INT,
+--     @ClassID INT
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+--         IF NOT EXISTS (SELECT 1 FROM ClassMeeting WHERE ClassMeetingID = @ClassID)
+--         BEGIN
+--             RAISERROR('Invalid ClassID: no matching class found.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         IF NOT EXISTS (SELECT 1 FROM Users WHERE UserID = @UserID)
+--         BEGIN
+--             RAISERROR('Invalid UserID: no matching user found.', 16, 2);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         IF EXISTS (SELECT 1 FROM SyncClassDetails WHERE StudentID = @UserID AND MeetingID = @ClassID)
+--         BEGIN
+--             RAISERROR('User is already enrolled in this class.', 16, 3);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         IF (Select MeetingType from ClassMeeting where ClassMeetingID = @ClassID) in ('Stationary', 'OnlineLiveClass')
+--         BEGIN
+--             EXEC p_EnrollStudentInSyncClassMeeting @UserID, @ClassID;
+--         END;
+
+--         ELSE
+--         BEGIN
+--             EXEC p_EnrollStudentInAsyncClass @UserID, @ClassID;
+--         END;
+
+
+--         COMMIT TRANSACTION;
+--     END TRY
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+
+--         THROW;
+--     END CATCH;
+-- END;
+
+-- CREATE OR ALTER PROCEDURE p_EnrollStudentInConvention
+-- (
+--     @UserID INT,
+--     @ConventionID INT
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+--         IF NOT EXISTS (SELECT 1 FROM Convention WHERE ConventionID = @ConventionID)
+--         BEGIN
+--             RAISERROR('Invalid ConventionID: no matching convention found.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         IF NOT EXISTS (SELECT 1 FROM Users WHERE UserID = @UserID)
+--         BEGIN
+--             RAISERROR('Invalid UserID: no matching user found.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         DECLARE @CurSubject INT = (SELECT SubjectID FROM Convention WHERE ConventionID = @ConventionID);
+--         DECLARE @ConvStart DATE = (SELECT StartDate FROM Convention WHERE ConventionID = @ConventionID);
+--         DECLARE @ConvEnd DATE = (SELECT DATEADD(DAY, Duration, StartDate) FROM Convention WHERE ConventionID = @ConventionID);
+
+--         DECLARE @ClassID INT;
+--         DECLARE Stationary_class_cursor CURSOR FOR
+--         SELECT MeetingID
+--         FROM ClassMeeting 
+--         JOIN StationaryClass ON ClassMeeting.ClassMeetingID = StationaryClass.MeetingID
+--         WHERE ClassMeeting.SubjectID = @CurSubject 
+--           AND StationaryClass.StartDate BETWEEN @ConvStart AND @ConvEnd;
+
+--         OPEN Stationary_class_cursor;
+--         FETCH NEXT FROM Stationary_class_cursor INTO @ClassID;
+--         WHILE @@FETCH_STATUS = 0
+--         BEGIN
+--             EXEC p_EnrollStudentInSyncClassMeeting @UserID, @ClassID;
+--             FETCH NEXT FROM Stationary_class_cursor INTO @ClassID;
+--         END;
+--         CLOSE Stationary_class_cursor;
+--         DEALLOCATE Stationary_class_cursor;
+
+--         DECLARE @AsyncClassID INT;
+--         DECLARE Async_class_cursor CURSOR FOR
+--         SELECT MeetingID
+--         FROM ClassMeeting 
+--         JOIN OfflineVideoClass ON ClassMeeting.ClassMeetingID = OfflineVideoClass.MeetingID
+--         WHERE ClassMeeting.SubjectID = @CurSubject 
+--           AND OfflineVideoClass.StartDate BETWEEN @ConvStart AND @ConvEnd;
+
+--         OPEN Async_class_cursor;
+--         FETCH NEXT FROM Async_class_cursor INTO @AsyncClassID;
+--         WHILE @@FETCH_STATUS = 0
+--         BEGIN
+--             EXEC p_EnrollStudentInAsyncClass @UserID, @AsyncClassID;
+--             FETCH NEXT FROM Async_class_cursor INTO @AsyncClassID;
+--         END;
+--         CLOSE Async_class_cursor;
+--         DEALLOCATE Async_class_cursor;
+
+--         DECLARE @OnlineClassID INT;
+--         DECLARE Online_class_cursor CURSOR FOR
+--         SELECT MeetingID
+--         FROM ClassMeeting 
+--         JOIN OnlineLiveClass ON ClassMeeting.ClassMeetingID = OnlineLiveClass.MeetingID
+--         WHERE ClassMeeting.SubjectID = @CurSubject 
+--           AND OnlineLiveClass.StartDate BETWEEN @ConvStart AND @ConvEnd;
+
+--         OPEN Online_class_cursor;
+--         FETCH NEXT FROM Online_class_cursor INTO @OnlineClassID;
+--         WHILE @@FETCH_STATUS = 0
+--         BEGIN
+--             EXEC p_EnrollStudentInSyncClassMeeting @UserID, @OnlineClassID;
+--             FETCH NEXT FROM Online_class_cursor INTO @OnlineClassID;
+--         END;
+--         CLOSE Online_class_cursor;
+--         DEALLOCATE Online_class_cursor;
+
+--         COMMIT TRANSACTION;
+--     END TRY
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+
+--         THROW;
+--     END CATCH;
+-- END;
