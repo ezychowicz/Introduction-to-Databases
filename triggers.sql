@@ -1,4 +1,4 @@
--- CREATE or ALTER TRIGGER [dbo].[AddStudentDetails]
+-- CREATE or ALTER TRIGGER [trg_AddStudentDetails]
 -- ON [dbo].[StudiesDetails]
 -- AFTER INSERT
 -- AS
@@ -42,7 +42,7 @@
 -- END;
 -- GO
 
--- CREATE Or ALTER TRIGGER [dbo].[AddStudentDetailsSubject]
+-- CREATE OR ALTER TRIGGER [trg_AddStudentDetailsSubject]
 -- ON [dbo].[SubjectDetails]
 -- AFTER INSERT
 -- AS
@@ -84,23 +84,23 @@
 --     SET NOCOUNT OFF;
 -- END;
 
-CREATE OR ALTER TRIGGER [dbo].[DeleteUserFromStudies]
-ON [dbo].[StudiesDetails]
-AFTER DELETE
-AS
-BEGIN
-    SET NOCOUNT ON; 
+-- CREATE OR ALTER TRIGGER [dbo].[trg_DeleteUserFromStudies]
+-- ON [dbo].[StudiesDetails]
+-- AFTER DELETE
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON; 
 
-    DELETE FROM dbo.SubjectDetails
-    WHERE StudentID IN (SELECT StudentID FROM Deleted);
+--     DELETE FROM dbo.SubjectDetails
+--     WHERE StudentID IN (SELECT StudentID FROM Deleted);
 
-    DELETE FROM dbo.InternshipDetails
-    WHERE StudentID IN (SELECT StudentID FROM Deleted);
+--     DELETE FROM dbo.InternshipDetails
+--     WHERE StudentID IN (SELECT StudentID FROM Deleted);
 
-    SET NOCOUNT OFF;
-END;
+--     SET NOCOUNT OFF;
+-- END;
 
--- CREATE OR ALTER TRIGGER [dbo].[DeleteUserFromSubject]
+-- CREATE OR ALTER TRIGGER [trg_DeleteUserFromSubject]
 -- ON [dbo].[SubjectDetails]
 -- AFTER DELETE
 -- AS
