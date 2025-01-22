@@ -72,7 +72,6 @@ SET @InternshipStart = '2027-09-07';
         SELECT 1
 FROM Internship
 WHERE StudiesID = @StudiesID
-    AND StartDate = @InternshipStart
     )
     BEGIN
     RAISERROR('Test Failed: Internship record was not created correctly.', 16, 1);

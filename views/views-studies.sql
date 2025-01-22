@@ -552,3 +552,95 @@
 -- Join UserAddressDetails uad
 --     ON uad.UserID = u.UserID
 -- ;
+
+-- CREATE OR ALTER VIEW V_StudiesInfo AS
+-- SELECT
+--     s.StudiesID,
+--     s.StudiesName,
+--     s.StudiesDescription,
+--     s.StudiesCoordinatorID,
+--     s.EnrollmentDeadline,
+--     s.EnrollmentLimit,
+--     s.ExpectedGraduationDate,
+--     CONCAT(u.FirstName, ' ', u.LastName) AS CoordinatorName
+-- FROM Studies s
+--     LEFT JOIN Employees e
+--     ON e.EmployeeID = s.StudiesCoordinatorID
+--     LEFT JOIN Users u
+--     ON u.UserID = e.EmployeeID
+-- where s.EnrollmentDeadline > GETDATE();
+
+use u_szymocha
+Select * from V_StudentSchedule
+
+-- CREATE VIEW dbo.V_StudentSchedule AS
+-- SELECT
+--         u.UserID AS ParticipantID,
+--         'StationaryMeeting' AS EventType,
+--         sm.MeetingID AS EventID,
+--         sm.MeetingDate AS StartTime,
+--         DATEADD(SECOND, DATEDIFF(SECOND, 0, sm.MeetingDuration), sm.MeetingDate) AS EndTime
+--     FROM StationaryMeeting sm
+--     JOIN StationaryMeetingDetails smd ON sm.MeetingID = smd.MeetingID
+--     JOIN Users u ON u.UserID = smd.ParticipantID
+--                 AND u.UserTypeID = 1  -- Student
+
+--     UNION ALL
+
+--     SELECT
+--         u.UserID AS ParticipantID,
+--         'OnlineLiveMeeting' AS EventType,
+--         olm.MeetingID AS EventID,
+--         olm.MeetingDate AS StartTime,
+--         DATEADD(SECOND, DATEDIFF(SECOND, 0, olm.MeetingDuration), olm.MeetingDate) AS EndTime
+--     FROM OnlineLiveMeeting olm
+--     JOIN OnlineLiveMeetingDetails omd ON omd.MeetingID = olm.MeetingID
+--     JOIN Users u ON u.UserID = omd.ParticipantID
+--                 AND u.UserTypeID = 1
+
+--     UNION ALL
+
+--     SELECT
+--         u.UserID AS ParticipantID,
+--         'StationaryClass' AS EventType,
+--         sc.MeetingID AS EventID,
+--         sc.StartDate AS StartTime,
+--         DATEADD(MINUTE, 90, sc.StartDate) AS EndTime
+--     FROM StationaryClass sc
+--     JOIN SyncClassDetails scd ON sc.MeetingID = scd.MeetingID
+--     JOIN Users u ON u.UserID = scd.StudentID
+--                 AND u.UserTypeID = 1
+
+--     UNION ALL
+
+--     SELECT
+--         u.UserID AS ParticipantID,
+--         'OnlineLiveClass' AS EventType,
+--         olc.MeetingID AS EventID,
+--         olc.StartDate AS StartTime,
+--         DATEADD(SECOND, DATEDIFF(SECOND, 0, olc.Duration), olc.StartDate) AS EndTime
+--     FROM OnlineLiveClass olc
+--     JOIN SyncClassDetails olcd ON olc.MeetingID = olcd.MeetingID
+--     JOIN Users u ON u.UserID = olcd.StudentID
+--                 AND u.UserTypeID = 1
+
+--     UNION ALL
+
+--     SELECT
+--         u.UserID AS ParticipantID,
+--         'Webinar' AS EventType,
+--         w.WebinarID AS EventID,
+--         w.WebinarDate AS StartTime,
+--         DATEADD(SECOND, DATEDIFF(SECOND, 0, w.DurationTime), w.WebinarDate) AS EndTime
+--     FROM Webinars w
+--     JOIN WebinarDetails wd ON w.WebinarID = wd.WebinarID
+--     JOIN Users u ON u.UserID = wd.UserID
+--                 AND u.UserTypeID = 1
+-- ;
+
+-- CREATE OR ALTER VIEW V_FutureStudentSchedule AS
+-- SELECT * from V_StudentSchedule
+-- WHERE StartTime > GETDATE()
+-- GO
+
+Select * from V_FutureStudentSchedule
