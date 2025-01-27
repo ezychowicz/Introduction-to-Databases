@@ -35,14 +35,17 @@ select * from IN_DEBT_USERS
 
 --PROCEDURY
 
+
+
 --KURSY I PLATNOSCI
 --dodawanie kursu -> dodawanie modułów kursowi -> dodawanie spotkań modułom -> dodawanie użytkownika do kursu
 
 --dodanie kursu
-select * from COURSE_INFO
+select * from Courses
 
 select * from Employees
-exec p_CreateCourse 'Nowy kurs', 'Opis nowego kursu...', 27, '2026-01-01', 80, 1000.00, 100.00
+order by EmployeeID
+exec p_CreateCourse 'Nowy kurs', 'Opis nowego kursu...', 144, '2026-01-01', 80, 1000.00, 100.00
 
 select * from Courses
 	where CourseName = 'Nowy kurs'
@@ -54,7 +57,7 @@ exec p_CreateModule 1, 21, 315, 80, 'Stationary'
 exec p_CreateModule 2, 21, NULL, 122, 'Online Lives'
 
 select * from Modules 
-where CourseID = 21 
+	where CourseID = 21 
  
 --dodanie zajęć
 select * from Rooms
@@ -104,7 +107,6 @@ where CourseID = 21
 --to samo ale funkcją
 select * from dbo.f_CourseSchedule(21)
 
-select * from V_StudentSchedule
 
 -- ustawianie obecności
 exec p_EditStationaryMeetingAttendance 992, 1, 1  
@@ -114,11 +116,13 @@ exec p_EditOnlineLiveAttendance 1002, 1, 1
 
 exec p_EditOfflineVideoDateOfViewing 1000, 1, '2025-01-21' 
 
+
+--czy już zdał (kurs sie nie skonczyl wiec sie nic nie pokaze)
+--select * from COURSE_PASSING_STATUS
+--	where CourseID = 21 
+
+--select top 1 dbo.f_CheckIfCourseIsPassed(1, 21) from courses
 --aktualne listy obecności:
---czy już zdał
-select * from COURSE_PASSING_STATUS
-where CourseID = 21 
-select top 1 dbo.f_CheckIfCourseIsPassed(1, 21) from courses
 
 select * from StationaryMeetingDetails
 where MeetingID = 992 OR MeetingID = 993
@@ -129,110 +133,71 @@ where MeetingID = 1000
 select * from OnlineLiveMeetingDetails
 where MeetingID = 1002
 
+
+
 -- część płatnicza:
 select * from Orders
 
 --tworzenie koszyka dla uzytkownika
-exec p_CreateOrder 1, NULL, NULL
-
-select * from Orders
-where UserID = 1
-
-
---dodawanie usług do koszyka
-select DISTINCT ServiceID from COURSE_INFO 
-where CourseName = 'Nowy kurs'
-
-
-exec p_AddOrderDetail 751, 2724
-exec p_AddOrderDetail 751, 1500
-exec p_AddOrderDetail 751, 100
-exec p_AddOrderDetail 751, 1000
-
---aktualnie zamowienie wyglada zawiera takie uslugi:
-select * from OrderDetails
-where OrderID = 751
-
---składanie zamówienia
-exec p_FinalizeOrder 751, 'www.paymentlink.com' --ustawia date zamowienia na aktualną
-
-select * from Orders
-where UserID = 1
-
---dodawanie płatności 100zl
-exec p_AddPayment 100, '2025-01-21 12:44:00', 2724, 751
-
-select * from CONSUMER_BASKET
-WHERE UserID = 1 AND OrderID = 751
-
-exec p_AddPayment 200, '2025-01-21 12:44:00', 2724, 751
-
-select * from CONSUMER_BASKET
-WHERE UserID = 1 AND OrderID = 751
-
---zgoda dyrektora
-exec p_UpdatePrincipalAgreement 751, 2724, 1
-
-select * from CONSUMER_BASKET
-WHERE UserID = 1 AND OrderID = 751
-
---usuwanie zgody dyrektora
-exec p_UpdatePrincipalAgreement 751, 2724, 0
-
-select * from CONSUMER_BASKET
-WHERE UserID = 1 AND OrderID = 751
-
---teraz kurs będzie w pełni opłacony - zadziała trigger - ale uczestnik już dodany wiec błąd
-exec p_AddPayment 700, '2025-01-21 12:44:00', 2724, 751
-
-select * from CONSUMER_BASKET
-WHERE UserID = 1 AND OrderID = 751
-
+exec p_CreateOrder 10, 2724, NULL, NULL -- userID = 10 dodaje usługe serviceID = 2724 do koszyka
+exec p_AddToOrder 751, 1500 --class meeting offline
+exec p_AddToOrder 751, 2430 --webinar
+exec p_AddToOrder 751, 2122 -- studia
+exec p_FinalizeOrder 751, 'paymentlink.com' -- składanie zamówienia (link do płatności i data aktualna)
 --trigger addPayment - dodanie do kursu automatyczne na podstawie płatności:
-exec p_CreateOrder 25, '2025-01-21 12:44:00', NULL 
 
-exec p_AddOrderDetail 752, 2724 --nowy kurs
-exec p_AddOrderDetail 752, 1500 --class meeting offline
-exec p_AddOrderDetail 752, 2424 --webinar
 
-exec p_EditWebinar 1, NULL, '2025-01-30 12:44:00' --zmiana daty na przyszla
+exec p_AddPayment 300, '2025-01-21 12:44:00', 2724, 751 --pierwsza opłata za kurs (większa od zaliczki)
 
-exec p_AddPayment 300, '2025-01-21 12:44:00', 2724, 752
-
+select * from CONSUMER_BASKET
+where UserID = 10 AND OrderID = 751
 --jeszcze nie oplacil wiec nie dodany
 select * from StationaryMeetingDetails
-where ParticipantID = 25 AND MeetingID = 992
+where ParticipantID = 10 AND MeetingID = 992
 
 
-select * from ClassMeetingService where ServiceID = 1500
-exec p_AddPayment 700, '2025-01-21 12:44:00', 2724, 752 --oplacenie kursu
-exec p_AddPayment 44.91, '2025-01-21 12:44:00', 2424, 752 --oplacenie webinaru
-exec p_AddPayment 67.45, '2025-01-21 12:44:00', 1500, 752 --oplacenie classmeetingu 
---oplacił: IsReadyToParticipate = 1
+exec p_AddPayment 700, '2025-01-21 12:44:00', 2724, 751 --oplacenie kursu
+exec p_AddPayment 97.27, '2025-01-21 12:44:00', 2430, 751 --oplacenie webinaru
+exec p_AddPayment 67.45, '2025-01-21 12:44:00', 1500, 751 --oplacenie classmeetingu 
+select * from StudiesService where ServiceID = 2122
+exec p_AddPayment 359.97, '2025-01-27 22:54:00', 2122, 751 
 
+--oplacił: IsReadyToParticipate = 1 => uruchomił trigger trg_AddPayment i został dodany do spotkań
 select * from CONSUMER_BASKET
-where UserID = 25 AND OrderID = 752
+where UserID = 10 AND OrderID = 751
 
 
 --dodany do listy zapisanych na spotkania:
+select * from V_StudentSchedule where ParticipantID = 10 --jego aktualny plan zajęć
+
+-- w listach obecności:
+--dodany do kursu
 select * from StationaryMeetingDetails 
-where ParticipantID = 25 AND MeetingID = 992
---dodany do listy webinaru
-select * from WebinarDetails where UserID = 25
+where ParticipantID = 10 AND MeetingID = 992
+--dodany do listy webinaru 
+select * from WebinarDetails as wd where wd.UserID = 10 AND (SELECT ServiceID FROM Webinars as w WHERE wd.WebinarID = w.WebinarID) = 2430 --Nagranie dostępne przez 30dni od daty Paymentu
 --dodany do listy classmeetingu
-select * from AsyncClassDetails where StudentID = 25
---trigger gdy kurs za mniej niż 3 dni
+select * from AsyncClassDetails as acd where acd.StudentID = 10 --AND acd.MeetingID = (SELECT ClassMeetingID FROM ClassMeeting WHERE ServiceID = 1500)
+
+
+--error gdy kurs za mniej niż 3 dni
 --zamowienie 
-exec p_CreateOrder 101, '2025-01-19 12:44:00', NULL 
-exec p_AddOrderDetail 753, 2724
-exec p_AddPayment 1000, '2025-12-31 12:44:00', 2724, 753
+exec p_CreateOrder 101, 2724, '2025-01-19 12:44:00', NULL
+exec p_AddPayment 1000, '2025-12-31 12:44:00', 2724, 752
+
+--error gdy kurs nie ma już wolnych miejsc (vacancies)
+select distinct CourseID, ServiceID, CourseName, Vacancies, AdvanceValue, FullPrice from COURSE_INFO Order by Vacancies 
+exec p_AddToOrder 752, 2415
+exec p_AddPayment 256.47, '2025-01-19 12:44:00', 2415, 752
+
 --usuwanie kursu
 exec p_DeleteCourse 21 --usuwa rekurencyjnie moduly i spotkania do nich nalezace a takze liste uczestnikow kursu;
 
-select * from COURSE_INFO
-where CourseName = 'Nowy kurs'
 
 
 
-select * from Services where ServiceID = 1500
-select * from ClassMeeting Where ServiceID = 1500
+
+
+
+
+
