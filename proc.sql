@@ -353,7 +353,15 @@
 --                 @NextStudiesID,
 --                 @InternshipStart
 --             );
-
+--         INSERT INTO Services
+--             (ServiceID, ServiceType)
+--         VALUES
+--             (@NextServiceID, 'StudiesService');
+        
+--         INSERT INTO StudiesService
+--             (ServiceID, EntryFee)
+--         VALUES
+--             (@NextServiceID, 0);
 --         COMMIT TRANSACTION;
 --     END TRY
 
@@ -364,7 +372,6 @@
 --     END CATCH;
 -- END;
 -- GO
-
 
 -- CREATE OR ALTER PROCEDURE p_AddSubject
 -- (
@@ -413,16 +420,30 @@
 --             FROM Subject;
 --         END;
 
+--         DECLARE @StudiesID INT;
+--         SELECT @StudiesID = MAX(StudiesID) FROM Studies;
+
+--         Declare @NextServiceID INT;
+--         IF NOT EXISTS (Select 1 from Services )
+--         BEGIN
+--             SET @NextServiceID = 1
+--         END
+--         ELSE
+--         BEGIN
+--             SET @NextServiceID = (Select max(ServiceID) from Services) + 1
+--         END 
 
 --         INSERT INTO Subject
---             (SubjectID, SubjectName, SubjectDescription,
---              SubjectCoordinatorID, Meetings)
+--             (SubjectID, StudiesID, SubjectName, SubjectDescription,
+--              SubjectCoordinatorID, Meetings, ServiceID)
 --         VALUES
---             (@NextSubjectID, 
+--             (@NextSubjectID,
+--             @StudiesID, 
 --              @SubjectName, 
 --              @SubjectDescription,
 --              @SubjectCoordinatorID, 
---              @Meetings);
+--              @Meetings,
+--              @NextServiceID);  
 
 --         COMMIT TRANSACTION;
 --     END TRY
@@ -553,9 +574,13 @@
 --         END;
 
 --         DECLARE @SemesterCnt INT, @SemesterID INT, @FirstSemesterID INT;
---         SET @SemesterCnt = (Select @SemesterCnt from Studies where StudiesID = @StudiesID);
+--         SET @SemesterCnt = (Select SemesterCount from Studies where StudiesID = @StudiesID);
 --         SET @FirstSemesterID = (Select MIN(SemesterID) from SemesterDetails where StudiesID = @StudiesID);
 --         SET @SemesterID = 1
+
+--         PRINT @SemesterCnt
+--         PRINT @FirstSemesterID
+--         PRINT @SemesterID
 
 --         While @SemesterID <= @SemesterCnt
 --         BEGIN
@@ -749,18 +774,22 @@
 --                 @TranslatorID,
 --                 @LanguageID,
 --                 @ServiceID,
---                 'Stationary'
+--                 'stationary'
 --             );
 
+--         Declare @L INT;
+--         SET @L = (Select Capacity from Rooms where RoomID = @RoomID);
+
 --         INSERT INTO StationaryClass
---             (MeetingID, RoomID, GroupSize, StartDate, Duration)
+--             (MeetingID, RoomID, GroupSize, StartDate, Duration, Limit)
 --         VALUES
 --             (
 --                 @NextMeetingID,
 --                 @RoomID,
 --                 @GroupSize,
 --                 @StartDate,
---                 @Duration
+--                 @Duration,
+--                 @L
 --             );
 
 --         INSERT INTO Services
@@ -938,7 +967,7 @@
 --                 @TranslatorID,
 --                 @LanguageID,
 --                 @ServiceID,
---                 'OnlineLiveClass'
+--                 'online'
 --             );
 
 --         INSERT INTO OnlineLiveClass
@@ -1091,7 +1120,7 @@
 --                 @TranslatorID,
 --                 @LanguageID,
 --                 @ServiceID,
---                 'OfflineVideo'
+--                 'offline'
 --             );
 
 --         INSERT INTO OfflineVideoClass
@@ -6434,6 +6463,7 @@
 --         THROW;
 --     END CATCH;
 -- END;
+-- GO
 
 -- Create or alter procedure p_EnrollStudentInAsyncClass
 -- (
@@ -6560,7 +6590,7 @@
 --             RETURN;
 --         END;
 
---         IF (Select MeetingType from ClassMeeting where ClassMeetingID = @ClassID) in ('Stationary', 'OnlineLiveClass')
+--         IF (Select MeetingType from ClassMeeting where ClassMeetingID = @ClassID) in ('Stationary', 'online')
 --         BEGIN
 --             EXEC p_EnrollStudentInSyncClassMeeting @UserID, @ClassID;
 --         END;
@@ -6581,96 +6611,297 @@
 --     END CATCH;
 -- END;
 
-    -- CREATE OR ALTER PROCEDURE p_EnrollStudentInConvention
-    -- (
-    --     @UserID INT,
-    --     @ConventionID INT
-    -- )
-    -- AS
-    -- BEGIN
-    --     SET NOCOUNT ON;
+-- CREATE OR ALTER PROCEDURE p_EnrollStudentInConvention
+-- (
+--     @UserID INT,
+--     @ConventionID INT
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
 
-    --     BEGIN TRY
-    --         BEGIN TRANSACTION;
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
 
-    --         IF NOT EXISTS (SELECT 1 FROM Convention WHERE ConventionID = @ConventionID)
-    --         BEGIN
-    --             RAISERROR('Invalid ConventionID: no matching convention found.', 16, 1);
-    --             ROLLBACK TRANSACTION;
-    --             RETURN;
-    --         END;
+--         IF NOT EXISTS (SELECT 1 FROM Convention WHERE ConventionID = @ConventionID)
+--         BEGIN
+--             RAISERROR('Invalid ConventionID: no matching convention found.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
 
-    --         IF NOT EXISTS (SELECT 1 FROM Users WHERE UserID = @UserID)
-    --         BEGIN
-    --             RAISERROR('Invalid UserID: no matching user found.', 16, 1);
-    --             ROLLBACK TRANSACTION;
-    --             RETURN;
-    --         END;
+--         IF NOT EXISTS (SELECT 1 FROM Users WHERE UserID = @UserID)
+--         BEGIN
+--             RAISERROR('Invalid UserID: no matching user found.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
 
-    --         DECLARE @CurSubject INT = (SELECT SubjectID FROM Convention WHERE ConventionID = @ConventionID);
-    --         DECLARE @ConvStart DATE = (SELECT StartDate FROM Convention WHERE ConventionID = @ConventionID);
-    --         DECLARE @ConvEnd DATE = (SELECT DATEADD(DAY, Duration, StartDate) FROM Convention WHERE ConventionID = @ConventionID);
+--         DECLARE @CurSubject INT = (SELECT SubjectID FROM Convention WHERE ConventionID = @ConventionID);
+--         DECLARE @ConvStart DATE = (SELECT StartDate FROM Convention WHERE ConventionID = @ConventionID);
+--         DECLARE @ConvEnd DATE = (SELECT DATEADD(DAY, Duration, StartDate) FROM Convention WHERE ConventionID = @ConventionID);
 
-    --         DECLARE @ClassID INT;
-    --         DECLARE Stationary_class_cursor CURSOR FOR
-    --         SELECT MeetingID
-    --         FROM ClassMeeting 
-    --         JOIN StationaryClass ON ClassMeeting.ClassMeetingID = StationaryClass.MeetingID
-    --         WHERE ClassMeeting.SubjectID = @CurSubject 
-    --         AND StationaryClass.StartDate BETWEEN @ConvStart AND @ConvEnd;
+--         DECLARE @ClassID INT;
+--         DECLARE Stationary_class_cursor CURSOR FOR
+--         SELECT MeetingID
+--         FROM ClassMeeting 
+--         JOIN StationaryClass ON ClassMeeting.ClassMeetingID = StationaryClass.MeetingID
+--         WHERE ClassMeeting.SubjectID = @CurSubject 
+--         AND StationaryClass.StartDate BETWEEN @ConvStart AND @ConvEnd;
 
-    --         OPEN Stationary_class_cursor;
-    --         FETCH NEXT FROM Stationary_class_cursor INTO @ClassID;
-    --         WHILE @@FETCH_STATUS = 0
-    --         BEGIN
-    --             EXEC p_EnrollStudentInSyncClassMeeting @UserID, @ClassID;
-    --             FETCH NEXT FROM Stationary_class_cursor INTO @ClassID;
-    --         END;
-    --         CLOSE Stationary_class_cursor;
-    --         DEALLOCATE Stationary_class_cursor;
+--         OPEN Stationary_class_cursor;
+--         FETCH NEXT FROM Stationary_class_cursor INTO @ClassID;
+--         WHILE @@FETCH_STATUS = 0
+--         BEGIN
+--             EXEC p_EnrollStudentInSyncClassMeeting @UserID, @ClassID;
+--             FETCH NEXT FROM Stationary_class_cursor INTO @ClassID;
+--         END;
+--         CLOSE Stationary_class_cursor;
+--         DEALLOCATE Stationary_class_cursor;
 
-    --         DECLARE @AsyncClassID INT;
-    --         DECLARE Async_class_cursor CURSOR FOR
-    --         SELECT MeetingID
-    --         FROM ClassMeeting 
-    --         JOIN OfflineVideoClass ON ClassMeeting.ClassMeetingID = OfflineVideoClass.MeetingID
-    --         WHERE ClassMeeting.SubjectID = @CurSubject 
-    --         AND OfflineVideoClass.StartDate BETWEEN @ConvStart AND @ConvEnd;
+--         DECLARE @AsyncClassID INT;
+--         DECLARE Async_class_cursor CURSOR FOR
+--         SELECT MeetingID
+--         FROM ClassMeeting 
+--         JOIN OfflineVideoClass ON ClassMeeting.ClassMeetingID = OfflineVideoClass.MeetingID
+--         WHERE ClassMeeting.SubjectID = @CurSubject 
+--         AND OfflineVideoClass.StartDate BETWEEN @ConvStart AND @ConvEnd;
 
-    --         OPEN Async_class_cursor;
-    --         FETCH NEXT FROM Async_class_cursor INTO @AsyncClassID;
-    --         WHILE @@FETCH_STATUS = 0
-    --         BEGIN
-    --             EXEC p_EnrollStudentInAsyncClass @UserID, @AsyncClassID;
-    --             FETCH NEXT FROM Async_class_cursor INTO @AsyncClassID;
-    --         END;
-    --         CLOSE Async_class_cursor;
-    --         DEALLOCATE Async_class_cursor;
+--         OPEN Async_class_cursor;
+--         FETCH NEXT FROM Async_class_cursor INTO @AsyncClassID;
+--         WHILE @@FETCH_STATUS = 0
+--         BEGIN
+--             EXEC p_EnrollStudentInAsyncClass @UserID, @AsyncClassID;
+--             FETCH NEXT FROM Async_class_cursor INTO @AsyncClassID;
+--         END;
+--         CLOSE Async_class_cursor;
+--         DEALLOCATE Async_class_cursor;
 
-    --         DECLARE @OnlineClassID INT;
-    --         DECLARE Online_class_cursor CURSOR FOR
-    --         SELECT MeetingID
-    --         FROM ClassMeeting 
-    --         JOIN OnlineLiveClass ON ClassMeeting.ClassMeetingID = OnlineLiveClass.MeetingID
-    --         WHERE ClassMeeting.SubjectID = @CurSubject 
-    --         AND OnlineLiveClass.StartDate BETWEEN @ConvStart AND @ConvEnd;
+--         DECLARE @OnlineClassID INT;
+--         DECLARE Online_class_cursor CURSOR FOR
+--         SELECT MeetingID
+--         FROM ClassMeeting 
+--         JOIN OnlineLiveClass ON ClassMeeting.ClassMeetingID = OnlineLiveClass.MeetingID
+--         WHERE ClassMeeting.SubjectID = @CurSubject 
+--         AND OnlineLiveClass.StartDate BETWEEN @ConvStart AND @ConvEnd;
 
-    --         OPEN Online_class_cursor;
-    --         FETCH NEXT FROM Online_class_cursor INTO @OnlineClassID;
-    --         WHILE @@FETCH_STATUS = 0
-    --         BEGIN
-    --             EXEC p_EnrollStudentInSyncClassMeeting @UserID, @OnlineClassID;
-    --             FETCH NEXT FROM Online_class_cursor INTO @OnlineClassID;
-    --         END;
-    --         CLOSE Online_class_cursor;
-    --         DEALLOCATE Online_class_cursor;
+--         OPEN Online_class_cursor;
+--         FETCH NEXT FROM Online_class_cursor INTO @OnlineClassID;
+--         WHILE @@FETCH_STATUS = 0
+--         BEGIN
+--             EXEC p_EnrollStudentInSyncClassMeeting @UserID, @OnlineClassID;
+--             FETCH NEXT FROM Online_class_cursor INTO @OnlineClassID;
+--         END;
+--         CLOSE Online_class_cursor;
+--         DEALLOCATE Online_class_cursor;
 
-    --         COMMIT TRANSACTION;
-    --     END TRY
-    --     BEGIN CATCH
-    --         IF @@TRANCOUNT > 0
-    --             ROLLBACK TRANSACTION;
+--         COMMIT TRANSACTION;
+--     END TRY
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
 
-    --         THROW;
-    --     END CATCH;
-    -- END;
+--         THROW;
+--     END CATCH;
+-- END;
+
+-- CREATE or ALTER Procedure p_ChangeAttendanceStatus
+-- (
+--     @UserID INT,
+--     @ClassID INT,
+--     @Attendance BIT
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+--         IF NOT EXISTS (SELECT 1 FROM ClassMeeting WHERE ClassMeetingID = @ClassID)
+--         BEGIN
+--             RAISERROR('Invalid ClassID: no matching class found.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         IF NOT EXISTS (SELECT 1 FROM Users WHERE UserID = @UserID)
+--         BEGIN
+--             RAISERROR('Invalid UserID: no matching user found.', 16, 2);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         IF NOT EXISTS (SELECT 1 FROM SyncClassDetails WHERE StudentID = @UserID AND MeetingID = @ClassID)
+--         BEGIN
+--             RAISERROR('User is not enrolled in this class.', 16, 3);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         UPDATE SyncClassDetails
+--         SET Attendance = @Attendance
+--         WHERE StudentID = @UserID AND MeetingID = @ClassID;
+
+--         COMMIT TRANSACTION;
+--     END TRY
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+
+--         THROW;
+--     END CATCH;
+-- END;
+
+-- CREATE or ALTER Procedure p_ChangeViewStatusAsyncClass
+-- (
+--     @UserID INT,
+--     @ClassID INT,
+--     @Viewed DATETIME
+-- )
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     BEGIN TRY
+--         BEGIN TRANSACTION;
+
+--         IF NOT EXISTS (SELECT 1 FROM ClassMeeting WHERE ClassMeetingID = @ClassID)
+--         BEGIN
+--             RAISERROR('Invalid ClassID: no matching class found.', 16, 1);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         IF NOT EXISTS (SELECT 1 FROM Users WHERE UserID = @UserID)
+--         BEGIN
+--             RAISERROR('Invalid UserID: no matching user found.', 16, 2);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         IF NOT EXISTS (SELECT 1 FROM AsyncClassDetails WHERE StudentID = @UserID AND MeetingID = @ClassID)
+--         BEGIN
+--             RAISERROR('User is not enrolled in this class.', 16, 3);
+--             ROLLBACK TRANSACTION;
+--             RETURN;
+--         END;
+
+--         UPDATE AsyncClassDetails
+--         SET ViewDate = @Viewed
+--         WHERE StudentID = @UserID AND MeetingID = @ClassID;
+
+--         COMMIT TRANSACTION;
+--     END TRY
+--     BEGIN CATCH
+--         IF @@TRANCOUNT > 0
+--             ROLLBACK TRANSACTION;
+
+--         THROW;
+--     END CATCH;
+-- END;
+
+
+-- CREATE or Alter PROCEDURE p_StudiesSemesterSchedule
+--     @StudiesID int,
+--     @Semester int
+-- AS
+-- BEGIN
+--     IF NOT EXISTS (SELECT 1 FROM Studies WHERE StudiesID = @StudiesID)
+--     BEGIN
+--         RAISERROR('StudiesID does not exist.', 16, 1);
+--         RETURN;
+--     END;
+
+--     Declare @SemesterID INT;
+--     SET @SemesterID = (SELECT MIN(SemesterID) from SemesterDetails where StudiesID = @StudiesID) + @Semester - 1;
+--     DECLARE @SemesterStartDate DATE;
+--     DECLARE @SemesterEndDate DATE;
+--     SELECT @SemesterStartDate = StartDate, @SemesterEndDate = EndDate FROM SemesterDetails WHERE SemesterID = @SemesterID;
+
+--     IF NOT EXISTS (SELECT 1 FROM SemesterDetails WHERE SemesterID = @SemesterID and StudiesID = @StudiesID)
+--     BEGIN
+--         RAISERROR('Semester does not exist for the specified StudiesID.', 16, 2);
+--         RETURN;
+--     END;
+
+--     WITH SemesterConventions AS (
+--         SELECT 
+--             c.SubjectID,
+--             c.StartDate as ConventionStartDate,
+--             c.Duration as ConventionDuration,
+--             c.ServiceID
+--         FROM Convention c
+--         JOIN SemesterDetails sd ON sd.SemesterID = @SemesterID
+--         WHERE c.SemesterID = @SemesterID
+--     ),
+--     AllMeetings AS (
+--         SELECT 
+--             cm.ClassMeetingID as MeetingID,
+--             CASE 
+--                 WHEN sc.StartDate IS NOT NULL THEN sc.StartDate
+--                 WHEN olc.StartDate IS NOT NULL THEN olc.StartDate
+--                 WHEN ovc.StartDate IS NOT NULL THEN ovc.StartDate
+--                 ELSE NULL
+--             END as StartDate,
+--             CASE 
+--                 WHEN sc.StartDate IS NOT NULL THEN DATEADD(minute, DATEDIFF(minute, '00:00:00', sc.Duration), sc.StartDate)
+--                 WHEN olc.StartDate IS NOT NULL THEN DATEADD(minute, DATEDIFF(minute, '00:00:00', olc.Duration), olc.StartDate)
+--                 WHEN ovc.Deadline IS NOT NULL THEN ovc.Deadline
+--                 ELSE NULL
+--             END as EndDate,
+--             cm.MeetingType,
+--             SubjectName
+--         FROM ClassMeeting cm
+--         JOIN SemesterConventions sc_conv ON cm.SubjectID = sc_conv.SubjectID
+--         JOIN Subject on cm.SubjectID = Subject.SubjectID
+--         LEFT JOIN StationaryClass sc ON cm.ClassMeetingID = sc.MeetingID
+--         LEFT JOIN OnlineLiveClass olc ON cm.ClassMeetingID = olc.MeetingID
+--         LEFT JOIN OfflineVideoClass ovc ON cm.ClassMeetingID = ovc.MeetingID
+--     )
+
+--     SELECT 
+--         MeetingID,
+--         StartDate,
+--         EndDate as Deadline,
+--         MeetingType,
+--         SubjectName
+--     FROM AllMeetings
+--     where StartDate is not null and StartDate >= @SemesterStartDate and EndDate <= @SemesterEndDate
+--     ORDER BY StartDate, MeetingID;
+-- END
+
+-- CREATE or alter PROCEDURE p_StudiesSyllabus
+--     @StudiesID int
+-- AS
+-- BEGIN
+--     -- Check if the StudiesID exists
+--     IF NOT EXISTS (SELECT 1
+--     FROM Studies
+--     WHERE StudiesID = @StudiesID)
+--     BEGIN
+--         RAISERROR ('StudiesID does not exist.', 16, 1)
+--         RETURN
+--     END;
+
+--     WITH
+--         SemesterNumbers
+--         AS
+--         (
+--             SELECT
+--                 sd.SemesterID,
+--                 sd.StudiesID,
+--                 DENSE_RANK() OVER (PARTITION BY sd.StudiesID ORDER BY sd.SemesterID) AS SemesterNumber
+--             FROM SemesterDetails sd
+--             WHERE sd.StudiesID = @StudiesID
+--         )
+--     SELECT DISTINCT
+--         sn.SemesterNumber,
+--         s.SubjectID,
+--         s.SubjectName,
+--         s.SubjectDescription
+--     FROM SemesterNumbers sn
+--         INNER JOIN Convention c ON sn.SemesterID = c.SemesterID
+--         INNER JOIN Subject s ON c.SubjectID = s.SubjectID
+--     ORDER BY sn.SemesterNumber, s.SubjectName;
+-- END

@@ -41,7 +41,6 @@
 --     SET NOCOUNT OFF;
 -- END;
 -- GO
-
 -- CREATE OR ALTER TRIGGER [trg_AddStudentDetailsSubject]
 -- ON [dbo].[SubjectDetails]
 -- AFTER INSERT
@@ -57,7 +56,7 @@
 --     FROM Inserted i
 --     Join ClassMeeting cm on i.SubjectID = cm.SubjectID
 --     WHERE 
---         cm.MeetingType IN ('StationaryClass', 'OnlineLiveClass')
+--         cm.MeetingType IN ('stationary', 'online')
 --         AND NOT EXISTS (
 --             SELECT 1
 --             FROM dbo.SyncClassDetails scd
@@ -73,7 +72,7 @@
 --     FROM Inserted i
 --     Join ClassMeeting cm on i.SubjectID = cm.SubjectID
 --     WHERE 
---         cm.MeetingType IN ('OfflineVideo')
+--         cm.MeetingType IN ('offline')
 --         AND NOT EXISTS (
 --             SELECT 1
 --             FROM dbo.AsyncClassDetails acd
@@ -108,10 +107,10 @@
 --     SET NOCOUNT ON; 
 
 --     DELETE FROM dbo.SyncClassDetails
---     WHERE StudentID IN (SELECT StudentID FROM Deleted) and MeetingID in (SELECT ClassMeetingID FROM ClassMeeting WHERE MeetingType IN ('StationaryClass', 'OnlineLiveClass'));
+--     WHERE StudentID IN (SELECT StudentID FROM Deleted) and MeetingID in (SELECT ClassMeetingID FROM ClassMeeting WHERE MeetingType IN ('stationary', 'online'));
 
 --     DELETE FROM dbo.AsyncClassDetails
---     WHERE StudentID IN (SELECT StudentID FROM Deleted) and MeetingID in (SELECT ClassMeetingID FROM ClassMeeting WHERE MeetingType IN ('OfflineVideo'));
+--     WHERE StudentID IN (SELECT StudentID FROM Deleted) and MeetingID in (SELECT ClassMeetingID FROM ClassMeeting WHERE MeetingType IN ('offline'));
 
 --     SET NOCOUNT OFF;
 -- END;

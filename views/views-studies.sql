@@ -570,8 +570,8 @@
 --     ON u.UserID = e.EmployeeID
 -- where s.EnrollmentDeadline > GETDATE();
 
-use u_szymocha
-Select * from V_StudentSchedule
+-- use u_szymocha
+-- Select * from V_StudentSchedule
 
 -- CREATE VIEW dbo.V_StudentSchedule AS
 -- SELECT
@@ -643,4 +643,101 @@ Select * from V_StudentSchedule
 -- WHERE StartTime > GETDATE()
 -- GO
 
-Select * from V_FutureStudentSchedule
+CREATE OR ALTER VIEW V_ConventionUsers
+AS
+WITH 
+AllSyncMeetings AS
+(
+    SELECT 
+        c.ServiceID,
+        COUNT(DISTINCT cm.ClassMeetingID) AS TotalSyncRequired
+    FROM Convention c
+    JOIN ClassMeeting cm 
+        ON cm.SubjectID = c.SubjectID
+    LEFT JOIN StationaryClass st
+        ON st.MeetingID = cm.ClassMeetingID
+    LEFT JOIN OnlineLiveClass ol
+        ON ol.MeetingID = cm.ClassMeetingID
+    WHERE (st.MeetingID IS NOT NULL OR ol.MeetingID IS NOT NULL)
+      AND (
+           COALESCE(st.StartDate, ol.StartDate) 
+           BETWEEN c.StartDate 
+               AND DATEADD(DAY, c.Duration, c.StartDate)
+          )
+    GROUP BY c.ServiceID
+),
+
+AllAsyncMeetings AS
+(
+    SELECT 
+        c.ServiceID,
+        COUNT(DISTINCT cm.ClassMeetingID) AS TotalAsyncRequired
+    FROM Convention c
+    JOIN ClassMeeting cm 
+        ON cm.SubjectID = c.SubjectID
+    JOIN OfflineVideoClass ov
+        ON ov.MeetingID = cm.ClassMeetingID
+    WHERE ov.StartDate 
+          BETWEEN c.StartDate 
+              AND DATEADD(DAY, c.Duration, c.StartDate)
+    GROUP BY c.ServiceID
+),
+
+UserSyncCounts AS
+(
+    SELECT 
+        c.ServiceID,
+        scd.StudentID,
+        COUNT(DISTINCT scd.MeetingID) AS UserSyncCount
+    FROM SyncClassDetails scd
+    JOIN ClassMeeting cm
+        ON cm.ClassMeetingID = scd.MeetingID
+    JOIN Convention c
+        ON c.SubjectID = cm.SubjectID
+    LEFT JOIN StationaryClass st
+        ON st.MeetingID = cm.ClassMeetingID
+    LEFT JOIN OnlineLiveClass ol
+        ON ol.MeetingID = cm.ClassMeetingID
+    WHERE (st.MeetingID IS NOT NULL OR ol.MeetingID IS NOT NULL)
+      AND COALESCE(st.StartDate, ol.StartDate)
+          BETWEEN c.StartDate 
+              AND DATEADD(DAY, c.Duration, c.StartDate)
+    GROUP BY c.ServiceID, scd.StudentID
+),
+UserAsyncCounts AS
+(
+    SELECT 
+        c.ServiceID,
+        acd.StudentID,
+        COUNT(DISTINCT acd.MeetingID) AS UserAsyncCount
+    FROM AsyncClassDetails acd
+    JOIN ClassMeeting cm
+        ON cm.ClassMeetingID = acd.MeetingID
+    JOIN Convention c
+        ON c.SubjectID = cm.SubjectID
+    JOIN OfflineVideoClass ov
+        ON ov.MeetingID = cm.ClassMeetingID
+    WHERE ov.StartDate
+          BETWEEN c.StartDate 
+              AND DATEADD(DAY, c.Duration, c.StartDate)
+    GROUP BY c.ServiceID, acd.StudentID
+)
+
+SELECT 
+    s.ServiceID,
+    s.StudentID AS ServiceUserID
+FROM UserSyncCounts s
+JOIN UserAsyncCounts a
+    ON a.ServiceID = s.ServiceID
+   AND a.StudentID    = s.StudentID
+JOIN AllSyncMeetings reqS
+    ON reqS.ServiceID = s.ServiceID
+JOIN AllAsyncMeetings reqA
+    ON reqA.ServiceID = a.ServiceID
+WHERE s.UserSyncCount   = reqS.TotalSyncRequired
+--   AND a.UserAsyncCount  = reqA.TotalAsyncRequired;
+GO
+
+-- exec p_EnrollStudentInConvention 40, 197 
+
+SELECT * FROM V_ConventionUsers;

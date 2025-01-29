@@ -627,8 +627,6 @@ for s2s in subject_to_studies_records:
 # ==============================================================================
 subject_details_records = []
 for subj in subject_records:
-    # how_many = random.randint(1, NUM_SUBJECT_DETAILS_PER_SUBJECT)
-    # chosen_students = random.sample(student_coll_records, k=min(how_many, len(student_coll_records)))
     studies_with_subject = [s2s['StudiesID'] for s2s in subject_to_studies_records if s2s['SubjectID'] == subj['SubjectID']]
     students_from_studies = [s['StudentID'] for s in studies_details_records if s['StudiesID'] in studies_with_subject]
     for cst in students_from_studies:

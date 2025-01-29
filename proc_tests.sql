@@ -234,7 +234,7 @@ VALUES
     INSERT INTO Studies
     (StudiesID, StudiesName, StudiesDescription, StudiesCoordinatorID, EnrollmentLimit, EnrollmentDeadline, SemesterCount, ExpectedGraduationDate, ServiceID)
 VALUES
-    (701, 'Computer Science', 'Comprehensive computer science studies.', 101, 150, DATEADD(DAY, 60, GETDATE()), 8, DATEADD(YEAR, 4, GETDATE()), 9002);
+    (701, 'Computer Science', 'Computer science studies.', 101, 150, DATEADD(DAY, 60, GETDATE()), 8, DATEADD(YEAR, 4, GETDATE()), 9002);
 
     EXEC p_AddSubjectToStudies
         @SubjectID = 601,
@@ -790,7 +790,7 @@ VALUES
         @StudiesID = 2901,
         @Duration = 20,
         @InternshipGrade = 0,
-        @InternshipAttendance = 1;
+        @InternshipAttendance = 0;
 
     IF NOT EXISTS (
         SELECT 1
@@ -799,7 +799,7 @@ WHERE InternshipID = 2801
     AND StudentID = 3101
     AND Duration = 20
     AND InternshipGrade = 0
-    AND InternshipAttendance = 1
+    AND InternshipAttendance = 0
     )
     BEGIN
     RAISERROR('Test Failed: InternshipDetails record for StudentID 3101 was not created correctly.', 16, 1);
@@ -812,7 +812,7 @@ WHERE InternshipID = 2801
     AND StudentID = 3102
     AND Duration = 20
     AND InternshipGrade = 0
-    AND InternshipAttendance = 1
+    AND InternshipAttendance = 0
     )
     BEGIN
     RAISERROR('Test Failed: InternshipDetails record for StudentID 3102 was not created correctly.', 16, 1);
@@ -893,7 +893,7 @@ BEGIN TRY
     INSERT INTO Users
     (UserID, FirstName, LastName, UserTypeID)
 VALUES
-    (3105, 'Ethan', 'Hunt', 1); -- Assuming UserTypeID 1 represents students
+    (3105, 'Ethan', 'Hunt', 1);
 
     INSERT INTO Internship
     (InternshipID, StudiesID, StartDate)
@@ -1474,7 +1474,7 @@ VALUES
     INSERT INTO TranslatorsLanguages
     (TranslatorID, LanguageID)
 VALUES
-    (1603, 1702); -- Translator Lisa speaks Spanish
+    (1603, 1702);
 
     INSERT INTO ClassMeeting
     (ClassMeetingID, SubjectID, TeacherID, MeetingName, TranslatorID, LanguageID, ServiceID, MeetingType)
@@ -1751,13 +1751,13 @@ WHERE ClassMeetingID = 20401
 END
 
     IF EXISTS (
-        SELECT 1 
-        FROM ClassMeetingService 
-        WHERE ServiceID = 90012
+        SELECT 1
+FROM ClassMeetingService
+WHERE ServiceID = 90012
     )
     BEGIN
-        RAISERROR('Test Failed: ClassMeetingService record was not deleted.', 16, 2);
-    END
+    RAISERROR('Test Failed: ClassMeetingService record was not deleted.', 16, 2);
+END
 
     PRINT 'Test Passed: p_DeleteClassMeeting executed successfully.';
 
@@ -1892,3 +1892,8 @@ GO
 -- =====================================================================
 -- End of Test Suite
 -- =====================================================================
+
+EXEC p_EnrollStudentInSyncClassMeeting 1, 1
+Select * from Users where UserID = 661
+select * from ClassMeeting where ClassMeetingID = 197
+exec p_EnrollStudentInConvention 661, 197
